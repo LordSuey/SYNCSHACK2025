@@ -8,7 +8,8 @@ const CONFIG = {
     // 2. Enable "Maps JavaScript API" and "Places API"
     // 3. Go to Credentials and create an API Key
     // 4. Restrict the API key to your domain for security
-    GOOGLE_MAPS_API_KEY: 'YOUR_GOOGLE_MAPS_API_KEY_HERE',
+    // Put your API key down below
+    GOOGLE_MAPS_API_KEY: '',
     
     // Other API keys can be added here as needed
     // FIREBASE_API_KEY: 'your_firebase_key_here',
