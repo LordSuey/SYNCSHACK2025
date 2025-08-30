@@ -115,6 +115,13 @@ function goBack() {
     window.history.back();
 }
 
+function goToMapForPin() {
+    // Store pin mode state for when we get to the home page
+    localStorage.setItem('enablePinMode', 'true');
+    // Navigate to home page
+    window.location.href = 'index.html';
+}
+
 // Location functions
 function goToLocation() {
     // Store the location data in localStorage so the map page can access it
@@ -160,6 +167,7 @@ function goToAchievementLocation(location, locationName, zoom, achievementTitle)
         window.location.href = 'index.html';
     }, 1000);
 }
+
 
 function goToSavedLocation(location, locationName, zoom, placeTitle) {
     // Parse the location string (format: "lat,lng")
@@ -238,6 +246,7 @@ function closeAddModal() {
     }
 }
 
+
 // Toast notification function
 function showToast(message) {
     // Create toast element
@@ -277,15 +286,7 @@ function showToast(message) {
     }, 3000);
 }
 
-// Handle escape key to close modal
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const modalOverlay = document.getElementById('modal-overlay');
-        if (modalOverlay && modalOverlay.classList.contains('active')) {
-            closeAddModal();
-        }
-    }
-});
+// Escape key handling removed - no modals on profile page
 
 // Prevent zoom on double tap for iOS
 let lastTouchEnd = 0;

@@ -8,6 +8,20 @@ let infoWindow;
 let isAddingPin = false;
 let userPins = [];
 
+
+// Check if we should enable pin mode (from profile page navigation)
+document.addEventListener('DOMContentLoaded', function() {
+    const enablePinMode = localStorage.getItem('enablePinMode');
+    if (enablePinMode === 'true') {
+        localStorage.removeItem('enablePinMode');
+        // Wait for the page to fully load, then enable pin mode
+        setTimeout(() => {
+            togglePinMode();
+        }, 1000);
+    }
+});
+
+
 // DOM elements
 const navButtons = document.querySelectorAll('.nav-btn');
 const pages = document.querySelectorAll('.page');
@@ -142,14 +156,154 @@ function initializeCompose() {
             submitPost();
         }
     });
+    
+    // Initialize pin modal
+    initializePinModal();
+}
+
+function initializePinModal() {
+    console.log('Initializing pin modal...');
+    const pinModal = document.getElementById('pin-modal-overlay');
+    const closePinModal = document.getElementById('close-pin-modal');
+    const cancelPinBtn = document.getElementById('cancel-pin-btn');
+    const createPinBtn = document.getElementById('create-pin-btn');
+    const pinTitle = document.getElementById('pin-title');
+    const pinDescription = document.getElementById('pin-description');
+    const pinPhotoInput = document.getElementById('pin-photo');
+    const pinPhotoBtn = document.getElementById('pin-photo-btn');
+    const pinImagePreview = document.getElementById('pin-image-preview');
+    
+    console.log('Pin modal elements found:', {
+        pinModal: !!pinModal,
+        createPinBtn: !!createPinBtn,
+        pinTitle: !!pinTitle,
+        pinDescription: !!pinDescription
+    });
+    
+    // Close modal events
+    function closePinModalHandler() {
+        pinModal.classList.remove('active');
+        pendingPinLocation = null;
+    }
+    
+    closePinModal.addEventListener('click', closePinModalHandler);
+    cancelPinBtn.addEventListener('click', closePinModalHandler);
+    pinModal.addEventListener('click', function(e) {
+        if (e.target === pinModal) {
+            closePinModalHandler();
+        }
+    });
+    
+    // Photo upload
+    pinPhotoBtn.addEventListener('click', () => {
+        pinPhotoInput.click();
+    });
+    
+    pinPhotoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                pinImagePreview.innerHTML = `<img src="${e.target.result}" alt="Pin photo">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Form validation
+    function validatePinForm() {
+        const title = pinTitle.value.trim();
+        createPinBtn.disabled = title.length === 0;
+        console.log('Validating pin form - title:', title, 'disabled:', createPinBtn.disabled);
+    }
+    
+    pinTitle.addEventListener('input', validatePinForm);
+    pinDescription.addEventListener('input', validatePinForm);
+    
+    // Create pin
+    if (createPinBtn) {
+        console.log('Adding click event listener to create pin button');
+        createPinBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Create pin button clicked!', 'pendingLocation:', pendingPinLocation);
+        
+        if (pendingPinLocation) {
+            const title = pinTitle.value.trim() || 'Untitled Pin';
+            const description = pinDescription.value.trim();
+            const category = document.querySelector('input[name="category"]:checked').value;
+            const customPhoto = pinImagePreview.querySelector('img')?.src;
+            
+            console.log('Creating pin with data:', { title, description, category, customPhoto });
+            
+            try {
+                createUserPin(
+                    pendingPinLocation.lat,
+                    pendingPinLocation.lng,
+                    title,
+                    description,
+                    category,
+                    customPhoto
+                );
+                console.log('Pin created successfully');
+            } catch (error) {
+                console.error('Error creating pin:', error);
+                showToast('Error creating pin: ' + error.message);
+            }
+            
+            closePinModalHandler();
+            
+            // Turn off pin mode
+            isAddingPin = false;
+            updateComposeButtonState();
+            document.getElementById('google-map').style.cursor = 'default';
+            
+            showToast('Pin added successfully!');
+        } else {
+            console.log('Cannot create pin - no pending location');
+            showToast('Error: No location selected for pin');
+        }
+        });
+    } else {
+        console.error('Create pin button not found - cannot add event listener');
+    }
+    
+    // Initialize pin details modal
+    initializePinDetailsModal();
+}
+
+function initializePinDetailsModal() {
+    const detailsModal = document.getElementById('pin-details-overlay');
+    const closeDetailsBtn = document.getElementById('close-pin-details');
+    const closeDetailsBtnFooter = document.getElementById('close-pin-details-btn');
+    const deleteBtn = document.getElementById('delete-pin-btn');
+    
+    // Close modal events
+    closeDetailsBtn.addEventListener('click', () => {
+        detailsModal.classList.remove('active');
+    });
+    
+    closeDetailsBtnFooter.addEventListener('click', () => {
+        detailsModal.classList.remove('active');
+    });
+    
+    detailsModal.addEventListener('click', function(e) {
+        if (e.target === detailsModal) {
+            detailsModal.classList.remove('active');
+        }
+    });
+    
+    // Delete pin
+    deleteBtn.addEventListener('click', function() {
+        const pinId = parseInt(detailsModal.dataset.pinId);
+        if (pinId) {
+            deleteUserPin(pinId);
+        }
+    });
 }
 
 function handleComposeClick() {
-    if (currentPage === 'home') {
-        togglePinMode();
-    } else {
-        openComposeModal();
-    }
+    // Always allow pin creation, regardless of current page
+    togglePinMode();
 }
 
 function togglePinMode() {
@@ -170,16 +324,12 @@ function updateComposeButtonState() {
     const composeIcon = composeNavBtn.querySelector('.compose-icon');
     const navIcon = composeNavBtn.querySelector('.nav-icon');
     
-    if (currentPage === 'home') {
-        if (isAddingPin) {
-            composeIcon.textContent = '✓';
-            navIcon.style.background = 'linear-gradient(135deg, #4CAF50, #66BB6A)';
-        } else {
-            composeIcon.textContent = '📍';
-            navIcon.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
-        }
+    // Always show pin mode state (no posts functionality)
+    if (isAddingPin) {
+        composeIcon.textContent = '✓';
+        navIcon.style.background = 'linear-gradient(135deg, #4CAF50, #66BB6A)';
     } else {
-        composeIcon.textContent = '+';
+        composeIcon.textContent = '📍';
         navIcon.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
     }
 }
@@ -702,7 +852,7 @@ function initMap() {
             }
         } catch (e) {
             console.error('Error parsing location data:', e);
-            defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+            defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: -33.8688, lng: 151.2093 };
             defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
         }
     } else {
@@ -814,6 +964,20 @@ function initMap() {
     // Setup map click for adding pins
     setupMapClickHandler();
     
+
+    // Load saved pins from localStorage
+    console.log('Map initialized, loading pins...');
+    loadPinsFromStorage();
+    
+    // Center map to show all hard-coded pins
+    const hardCodedBounds = new google.maps.LatLngBounds();
+    hardCodedBounds.extend({ lat: -33.88036830097366, lng: 151.20427651239518 }); // Haymarket cat
+    hardCodedBounds.extend({ lat: -33.89159793495311, lng: 151.1952780812729 }); // Redfern cat
+    hardCodedBounds.extend({ lat: -33.863530954674445, lng: 151.01858344807906 }); // Auburn Cherry Blossom
+    map.fitBounds(hardCodedBounds);
+    map.setZoom(Math.max(map.getZoom(), 11)); // Ensure minimum zoom level
+    
+
     // Setup achievements functionality
     setupAchievements();
 }
@@ -904,15 +1068,9 @@ function setupMapSearch() {
     });
 }
 
-function setupMapClickHandler() {
-    map.addListener('click', (event) => {
-        if (isAddingPin) {
-            const lat = event.latLng.lat();
-            const lng = event.latLng.lng();
-            promptForPinDetails(lat, lng);
-        }
-    });
-}
+// Pin creation variables
+let pendingPinLocation = null;
+
 
 function promptForPinDetails(lat, lng) {
     const title = prompt('Enter a title for this location:');
@@ -928,18 +1086,338 @@ function promptForPinDetails(lat, lng) {
         showToast('Pin added successfully!');
     } else {
         showToast('Pin creation cancelled');
+
+// File-based storage functions for pins
+async function savePinsToStorage() {
+    try {
+        // Filter out hard-coded pins and remove marker references before saving
+        const pinsToSave = userPins
+            .filter(pin => pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) // Exclude hard-coded pins
+            .map(pin => {
+                const { marker, ...pinData } = pin;
+                return pinData;
+            });
+        
+        // Create a downloadable JSON file
+        const dataStr = JSON.stringify(pinsToSave, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        // For development: log the data that would be saved
+        console.log('User pins data to save:', pinsToSave.length, 'pins (excluding hard-coded)');
+        console.log('JSON data:', dataStr);
+        
+        // Save only user-created pins to localStorage
+        localStorage.setItem('userPins', JSON.stringify(pinsToSave));
+        
+        // Auto-download the pins file for local storage
+        downloadPinsFile();
+        
+    } catch (error) {
+        console.error('Error saving pins to file:', error);
     }
 }
 
-function createUserPin(lat, lng, title, description) {
+function loadPinsFromStorage() {
+    try {
+        // Hard-coded pin data
+        const hardCodedPins = [
+            {
+                id: 1756574202596,
+                lat: -33.88036830097366,
+                lng: 151.20427651239518,
+                title: "Haymarket cat",
+                description: "Friendly Orange Cat",
+                category: "meme",
+                timestamp: new Date("2025-08-30T17:16:42.596Z")
+            },
+            {
+                id: 1756576515738,
+                lat: -33.89159793495311,
+                lng: 151.1952780812729,
+                title: "Redfern cat",
+                description: "Whisky the chonky, orange & white cat",
+                category: "meme",
+                timestamp: new Date("2025-08-30T17:55:15.738Z")
+            },
+            {
+                id: 1756576659444,
+                lat: -33.863530954674445,
+                lng: 151.01858344807906,
+                title: "Auburn Cherry Blossom",
+                description: "",
+                category: "landmark",
+                timestamp: new Date("2025-08-30T17:57:39.444Z")
+            }
+        ];
+        
+        // Try to load from localStorage first (for user-created pins)
+        const savedPins = localStorage.getItem('userPins');
+        let userCreatedPins = [];
+        if (savedPins) {
+            const parsedPins = JSON.parse(savedPins);
+            console.log('Loading user pins from localStorage:', parsedPins.length, 'pins');
+            
+            // Recreate each user pin
+            userCreatedPins = parsedPins.map(pinData => {
+                // Convert timestamp back to Date object
+                pinData.timestamp = new Date(pinData.timestamp);
+                return pinData;
+            });
+        }
+        
+        // Clear current pins and reload
+        userPins = [];
+        
+        // Add hard-coded pins first
+        hardCodedPins.forEach(pinData => {
+            userPins.push(pinData);
+            console.log('Adding hard-coded pin:', pinData);
+            
+            // Create marker if Google Maps is available
+            if (typeof google !== 'undefined' && google.maps && map) {
+                console.log('Creating marker for hard-coded pin');
+                createPinMarker(pinData);
+            } else {
+                console.log('Google Maps not ready yet for hard-coded pin');
+            }
+        });
+        
+        // Add user-created pins
+        userCreatedPins.forEach(pinData => {
+            userPins.push(pinData);
+            
+            // Create marker if Google Maps is available
+            if (typeof google !== 'undefined' && google.maps && map) {
+                createPinMarker(pinData);
+            }
+        });
+        
+        console.log('Successfully loaded', userPins.length, 'pins (including hard-coded)');
+        
+    } catch (error) {
+        console.error('Error loading pins:', error);
+    }
+}
+
+function downloadPinsFile() {
+    try {
+        const pinsToSave = userPins
+            .filter(pin => pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) // Exclude hard-coded pins
+            .map(pin => {
+                const { marker, ...pinData } = pin;
+                return pinData;
+            });
+        
+        const dataStr = JSON.stringify(pinsToSave, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'pins.json';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast('User pins file downloaded to your Downloads folder');
+    } catch (error) {
+        console.error('Error downloading pins file:', error);
+    }
+}
+
+function clearAllPins() {
+    // Remove only user-created markers from map, keep hard-coded pins
+    userPins.forEach(pin => {
+        if (pin.marker && pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) {
+            pin.marker.setMap(null);
+        }
+    });
+    
+    // Keep hard-coded pins, remove only user-created ones
+    userPins = userPins.filter(pin => pin.id === 1756574202596 || pin.id === 1756576515738 || pin.id === 1756576659444);
+    localStorage.removeItem('userPins');
+    
+    // Also clear the file by downloading an empty one
+    const emptyData = JSON.stringify([], null, 2);
+    const dataBlob = new Blob([emptyData], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'pins.json';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    console.log('User pins cleared from map and storage (hard-coded pins preserved)');
+    showToast('User pins cleared - hard-coded pins preserved');
+}
+
+function loadPinsFromFile() {
+    const fileInput = document.getElementById('pins-file-input');
+    fileInput.click();
+}
+
+// Initialize file upload handler
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('pins-file-input');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/json') {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const pinsData = JSON.parse(event.target.result);
+                        
+                        // Clear existing pins
+                        userPins.forEach(pin => {
+                            if (pin.marker) {
+                                pin.marker.setMap(null);
+                            }
+                        });
+                        userPins = [];
+                        
+                        // Load pins from file
+                        pinsData.forEach(pinData => {
+                            pinData.timestamp = new Date(pinData.timestamp);
+                            userPins.push(pinData);
+                            
+                            if (typeof google !== 'undefined' && google.maps && map) {
+                                createPinMarker(pinData);
+                            }
+                        });
+                        
+                        // Save to localStorage as backup
+                        localStorage.setItem('userPins', JSON.stringify(pinsData));
+                        
+                        showToast(`Loaded ${pinsData.length} pins from file`);
+                        console.log('Successfully loaded pins from uploaded file');
+                        
+                    } catch (error) {
+                        console.error('Error parsing pins file:', error);
+                        showToast('Error: Invalid pins file format');
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                showToast('Please select a valid JSON file');
+            }
+            
+            // Reset file input
+            e.target.value = '';
+        });
+    }
+});
+
+function setupMapClickHandler() {
+    map.addListener('click', (event) => {
+        if (isAddingPin) {
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+            openPinModal(lat, lng);
+        }
+    });
+}
+
+function openPinModal(lat, lng) {
+    console.log('Opening pin modal with location:', lat, lng);
+    pendingPinLocation = { lat, lng };
+    const pinModal = document.getElementById('pin-modal-overlay');
+    
+    if (!pinModal) {
+        console.error('Pin modal not found!');
+        return;
+    }
+    
+    pinModal.classList.add('active');
+    
+    // Reset form
+    document.getElementById('pin-title').value = '';
+    document.getElementById('pin-description').value = '';
+    document.querySelector('input[name="category"][value="landmark"]').checked = true;
+    document.getElementById('pin-image-preview').innerHTML = '';
+    document.getElementById('pin-photo').value = '';
+    
+    // Enable create button (we'll validate on submit)
+    const createBtn = document.getElementById('create-pin-btn');
+    if (createBtn) {
+        createBtn.disabled = false;
+        console.log('Create button enabled');
+    } else {
+        console.error('Create pin button not found!');
+    }
+}
+
+// Category icons and colors
+const categoryConfig = {
+    landmark: {
+        icon: 'photo/landmark.webp',
+        color: '#4285f4',
+        emoji: '🏛️'
+    },
+    nature: {
+        icon: 'photo/nature.webp', 
+        color: '#34a853',
+        emoji: '🌲'
+    },
+    meme: {
+        icon: 'photo/meme.webp',
+        color: '#fbbc04',
+        emoji: '😄'
+    },
+    event: {
+        icon: 'photo/event.webp',
+        color: '#ea4335',
+        emoji: '🎉'
+    }
+};
+
+function createUserPin(lat, lng, title, description, category, customPhoto) {
+    console.log('createUserPin called with:', { lat, lng, title, description, category, customPhoto });
+    
     const pinData = {
         id: Date.now(),
         lat: lat,
         lng: lng,
         title: title,
         description: description,
+        category: category,
+        customPhoto: customPhoto,
         timestamp: new Date()
     };
+    
+    userPins.push(pinData);
+    console.log('Pin data added to userPins array');
+    
+    // Create marker on map (if Google Maps is available)
+    if (typeof google !== 'undefined' && google.maps && map) {
+        console.log('Creating Google Maps marker with webp icon');
+        createPinMarker(pinData);
+        console.log('Google Maps marker created successfully');
+    } else {
+        console.warn('Google Maps not available, storing pin data only');
+
+    }
+    
+    // Save to localStorage
+    savePinsToStorage();
+}
+
+
+function createPinMarker(pinData) {
+    console.log('createPinMarker called with:', pinData);
+    
+    // Always use the category icon for the pin marker on the map
+    const iconUrl = `photo/${pinData.category}.webp`;
+    console.log('Using category icon:', iconUrl);
+    
+    console.log('Creating marker at:', pinData.lat, pinData.lng, 'with icon:', iconUrl);
+
     
     userPins.push(pinData);
     
@@ -954,7 +1432,10 @@ function createUserPin(lat, lng, title, description) {
         }
     });
 
+    console.log('Marker created successfully');
+
     marker.addListener('click', () => {
+
         const content = `
             <div style="color: #333; max-width: 200px;">
                 <h3 style="margin: 0 0 8px 0; color: #000;">${title}</h3>
@@ -968,10 +1449,66 @@ function createUserPin(lat, lng, title, description) {
         `;
         infoWindow.setContent(content);
         infoWindow.open(map, marker);
+
+        showPinDetails(pinData);
+
     });
     
     // Store marker reference for deletion
     pinData.marker = marker;
+
+}
+
+function showPinDetails(pinData) {
+    console.log('showPinDetails called with pinData:', pinData);
+    console.log('Pin ID:', pinData.id, 'Type:', typeof pinData.id);
+    
+    const modal = document.getElementById('pin-details-overlay');
+    const photo = document.getElementById('pin-details-photo');
+    const title = document.getElementById('pin-details-title');
+    const category = document.getElementById('pin-details-category');
+    const description = document.getElementById('pin-details-description');
+    
+    // Set photo
+    if (pinData.customPhoto) {
+        console.log('Using custom photo:', pinData.customPhoto);
+        photo.src = pinData.customPhoto;
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756574202596) {
+        // Use Haymarket cat image for the specific hard-coded pin
+        console.log('Using Haymarket cat image');
+        photo.src = 'photo/Haymarket cat.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756576515738) {
+        // Use Redfern cat image for the specific hard-coded pin
+        console.log('Using Redfern cat image');
+        photo.src = 'photo/redfern cat.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756576659444) {
+        // Use Cherry Blossom image for the specific hard-coded pin
+        console.log('Using Cherry Blossom image');
+        photo.src = 'photo/cherry blossom.png';
+        photo.style.display = 'block';
+    } else {
+        console.log('Using category icon for category:', pinData.category);
+        const categoryData = categoryConfig[pinData.category];
+        photo.src = categoryData.icon;
+        photo.style.display = 'block';
+    }
+    
+    console.log('Final photo src:', photo.src);
+    
+    // Set content
+    title.textContent = pinData.title;
+    category.innerHTML = `${categoryConfig[pinData.category].emoji} ${pinData.category.charAt(0).toUpperCase() + pinData.category.slice(1)}`;
+    description.textContent = pinData.description || 'No description provided.';
+    
+    // Store current pin ID for deletion
+    modal.dataset.pinId = pinData.id;
+    
+    // Show modal
+    modal.classList.add('active');
+
 }
 
 function deleteUserPin(pinId) {
@@ -987,8 +1524,17 @@ function deleteUserPin(pinId) {
         // Remove from array
         userPins.splice(pinIndex, 1);
         
+
         // Close info window
         infoWindow.close();
+
+        // Update localStorage
+        savePinsToStorage();
+        
+        // Close details modal if open
+        const detailsModal = document.getElementById('pin-details-overlay');
+        detailsModal.classList.remove('active');
+
         
         showToast('Pin deleted');
     }
