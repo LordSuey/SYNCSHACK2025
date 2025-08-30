@@ -80,14 +80,32 @@ function initializeInteractiveFeatures() {
         if (e.target.closest('.saved-item')) {
             const savedItem = e.target.closest('.saved-item');
             const title = savedItem.querySelector('h4').textContent;
-            showToast(`Opening saved place: ${title}`);
+            const location = savedItem.getAttribute('data-location');
+            const locationName = savedItem.getAttribute('data-location-name');
+            const zoom = savedItem.getAttribute('data-zoom');
+            
+            if (location) {
+                // Navigate to map with saved location
+                goToSavedLocation(location, locationName, zoom, title);
+            } else {
+                showToast(`Opening saved place: ${title}`);
+            }
         }
         
         // Seen items click handlers
         if (e.target.closest('.seen-item')) {
             const seenItem = e.target.closest('.seen-item');
             const title = seenItem.querySelector('h4').textContent;
-            showToast(`Opening visited place: ${title}`);
+            const location = seenItem.getAttribute('data-location');
+            const locationName = seenItem.getAttribute('data-location-name');
+            const zoom = seenItem.getAttribute('data-zoom');
+            
+            if (location) {
+                // Navigate to map with seen location
+                goToSeenLocation(location, locationName, zoom, title);
+            } else {
+                showToast(`Opening visited place: ${title}`);
+            }
         }
     });
 }
@@ -150,7 +168,84 @@ function goToAchievementLocation(location, locationName, zoom, achievementTitle)
     }, 1000);
 }
 
-// Modal functions removed - pin creation happens on map page
+
+function goToSavedLocation(location, locationName, zoom, placeTitle) {
+    // Parse the location string (format: "lat,lng")
+    const [lat, lng] = location.split(',').map(coord => parseFloat(coord.trim()));
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        showToast('Invalid location data for this saved place');
+        return;
+    }
+    
+    // Store the saved location data in localStorage
+    const locationData = {
+        lat: lat,
+        lng: lng,
+        name: locationName,
+        zoom: parseInt(zoom) || 15,
+        type: 'saved',
+        placeTitle: placeTitle
+    };
+    
+    localStorage.setItem('redirectToLocation', JSON.stringify(locationData));
+    
+    // Show toast before redirecting
+    showToast(`Showing ${placeTitle} on map`);
+    
+    // Redirect to the main page (map)
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 1000);
+}
+
+function goToSeenLocation(location, locationName, zoom, placeTitle) {
+    // Parse the location string (format: "lat,lng")
+    const [lat, lng] = location.split(',').map(coord => parseFloat(coord.trim()));
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        showToast('Invalid location data for this visited place');
+        return;
+    }
+    
+    // Store the seen location data in localStorage
+    const locationData = {
+        lat: lat,
+        lng: lng,
+        name: locationName,
+        zoom: parseInt(zoom) || 15,
+        type: 'seen',
+        placeTitle: placeTitle
+    };
+    
+    localStorage.setItem('redirectToLocation', JSON.stringify(locationData));
+    
+    // Show toast before redirecting
+    showToast(`Showing ${placeTitle} on map`);
+    
+    // Redirect to the main page (map)
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 1000);
+}
+
+// Modal functions
+function openAddModal() {
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeAddModal() {
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
 
 // Toast notification function
 function showToast(message) {
