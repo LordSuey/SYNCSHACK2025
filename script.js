@@ -890,9 +890,13 @@ function initMap() {
     console.log('Map initialized, loading pins...');
     loadPinsFromStorage();
     
-    // Center map on hard-coded pin location
-    map.setCenter({ lat: -33.91842735055107, lng: 151.18157129364016 });
-    map.setZoom(15);
+    // Center map to show all hard-coded pins
+    const hardCodedBounds = new google.maps.LatLngBounds();
+    hardCodedBounds.extend({ lat: -33.88036830097366, lng: 151.20427651239518 }); // Haymarket cat
+    hardCodedBounds.extend({ lat: -33.89159793495311, lng: 151.1952780812729 }); // Redfern cat
+    hardCodedBounds.extend({ lat: -33.863530954674445, lng: 151.01858344807906 }); // Auburn Cherry Blossom
+    map.fitBounds(hardCodedBounds);
+    map.setZoom(Math.max(map.getZoom(), 11)); // Ensure minimum zoom level
     
     // Setup achievements functionality
     setupAchievements();
@@ -992,7 +996,7 @@ async function savePinsToStorage() {
     try {
         // Filter out hard-coded pins and remove marker references before saving
         const pinsToSave = userPins
-            .filter(pin => pin.id !== 1756574202596) // Exclude hard-coded pin
+            .filter(pin => pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) // Exclude hard-coded pins
             .map(pin => {
                 const { marker, ...pinData } = pin;
                 return pinData;
@@ -1023,12 +1027,30 @@ function loadPinsFromStorage() {
         const hardCodedPins = [
             {
                 id: 1756574202596,
-                lat: -33.91842735055107,
-                lng: 151.18157129364016,
-                title: "Untitled Pin",
+                lat: -33.88036830097366,
+                lng: 151.20427651239518,
+                title: "Haymarket cat",
+                description: "Friendly Orange Cat",
+                category: "meme",
+                timestamp: new Date("2025-08-30T17:16:42.596Z")
+            },
+            {
+                id: 1756576515738,
+                lat: -33.89159793495311,
+                lng: 151.1952780812729,
+                title: "Redfern cat",
+                description: "Whisky the chonky, orange & white cat",
+                category: "meme",
+                timestamp: new Date("2025-08-30T17:55:15.738Z")
+            },
+            {
+                id: 1756576659444,
+                lat: -33.863530954674445,
+                lng: 151.01858344807906,
+                title: "Auburn Cherry Blossom",
                 description: "",
                 category: "landmark",
-                timestamp: new Date("2025-08-30T17:16:42.596Z")
+                timestamp: new Date("2025-08-30T17:57:39.444Z")
             }
         ];
         
@@ -1084,7 +1106,7 @@ function loadPinsFromStorage() {
 function downloadPinsFile() {
     try {
         const pinsToSave = userPins
-            .filter(pin => pin.id !== 1756574202596) // Exclude hard-coded pin
+            .filter(pin => pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) // Exclude hard-coded pins
             .map(pin => {
                 const { marker, ...pinData } = pin;
                 return pinData;
@@ -1112,13 +1134,13 @@ function downloadPinsFile() {
 function clearAllPins() {
     // Remove only user-created markers from map, keep hard-coded pins
     userPins.forEach(pin => {
-        if (pin.marker && pin.id !== 1756574202596) {
+        if (pin.marker && pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) {
             pin.marker.setMap(null);
         }
     });
     
     // Keep hard-coded pins, remove only user-created ones
-    userPins = userPins.filter(pin => pin.id === 1756574202596);
+    userPins = userPins.filter(pin => pin.id === 1756574202596 || pin.id === 1756576515738 || pin.id === 1756576659444);
     localStorage.removeItem('userPins');
     
     // Also clear the file by downloading an empty one
@@ -1320,6 +1342,9 @@ function createPinMarker(pinData) {
 }
 
 function showPinDetails(pinData) {
+    console.log('showPinDetails called with pinData:', pinData);
+    console.log('Pin ID:', pinData.id, 'Type:', typeof pinData.id);
+    
     const modal = document.getElementById('pin-details-overlay');
     const photo = document.getElementById('pin-details-photo');
     const title = document.getElementById('pin-details-title');
@@ -1328,17 +1353,32 @@ function showPinDetails(pinData) {
     
     // Set photo
     if (pinData.customPhoto) {
+        console.log('Using custom photo:', pinData.customPhoto);
         photo.src = pinData.customPhoto;
         photo.style.display = 'block';
     } else if (pinData.id === 1756574202596) {
         // Use Haymarket cat image for the specific hard-coded pin
+        console.log('Using Haymarket cat image');
         photo.src = 'photo/Haymarket cat.png';
         photo.style.display = 'block';
+    } else if (pinData.id === 1756576515738) {
+        // Use Redfern cat image for the specific hard-coded pin
+        console.log('Using Redfern cat image');
+        photo.src = 'photo/redfern cat.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756576659444) {
+        // Use Cherry Blossom image for the specific hard-coded pin
+        console.log('Using Cherry Blossom image');
+        photo.src = 'photo/cherry blossom.png';
+        photo.style.display = 'block';
     } else {
+        console.log('Using category icon for category:', pinData.category);
         const categoryData = categoryConfig[pinData.category];
         photo.src = categoryData.icon;
         photo.style.display = 'block';
     }
+    
+    console.log('Final photo src:', photo.src);
     
     // Set content
     title.textContent = pinData.title;
