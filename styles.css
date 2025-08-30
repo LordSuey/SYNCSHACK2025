@@ -723,6 +723,137 @@ html {
     background: transparent;
 }
 
+/* Pin Creation Modal Styles */
+.pin-modal {
+    max-width: 400px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.pin-modal .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.pin-modal .modal-footer {
+    flex-shrink: 0;
+}
+
+#pin-title {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #444;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-bottom: 16px;
+    background-color: #2a2a2a;
+    color: #fff;
+}
+
+#pin-description {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #444;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    background-color: #2a2a2a;
+    color: #fff;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+#pin-title:focus,
+#pin-description:focus {
+    outline: none;
+    border-color: #ff6b6b;
+}
+
+#pin-title::placeholder,
+#pin-description::placeholder {
+    color: #888;
+}
+
+.category-selection {
+    margin-bottom: 24px;
+}
+
+.category-selection h4 {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.category-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.category-option {
+    cursor: pointer;
+    display: block;
+}
+
+.category-option input[type="radio"] {
+    display: none;
+}
+
+.category-icon {
+    background-color: #2a2a2a;
+    border: 2px solid #444;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.category-icon img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.category-icon span {
+    font-size: 12px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.category-option input[type="radio"]:checked + .category-icon {
+    border-color: #ff6b6b;
+    background-color: rgba(255, 107, 107, 0.1);
+}
+
+.category-option input[type="radio"]:checked + .category-icon span {
+    color: #ff6b6b;
+    font-weight: 600;
+}
+
+.category-option:hover .category-icon {
+    border-color: #666;
+}
+
+.photo-option {
+    border-top: 1px solid #333;
+    padding-top: 20px;
+}
+
+.photo-option h4 {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
 /* Ripple effect animation */
 @keyframes ripple {
     to {
