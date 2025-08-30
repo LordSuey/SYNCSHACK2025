@@ -45,41 +45,33 @@ function initializeNavigation() {
 }
 
 function switchPage(pageId) {
-    // Update active nav button
-    navButtons.forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
-    }
-    
-    // Update active page
-    pages.forEach(page => page.classList.remove('active'));
-    const targetPage = document.getElementById(`${pageId}-page`);
-    if (targetPage) {
-        targetPage.classList.add('active');
-    }
-    
-    // Show/hide top navigation based on page
-    const topNav = document.querySelector('.top-nav');
-    const mainContent = document.querySelector('.main-content');
-    
+    // Only handle home page since profile is now separate
     if (pageId === 'home') {
+        // Update active nav button
+        navButtons.forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+        
+        // Update active page
+        pages.forEach(page => page.classList.remove('active'));
+        const targetPage = document.getElementById(`${pageId}-page`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+        }
+        
+        // Show top navigation for home page
+        const topNav = document.querySelector('.top-nav');
+        const mainContent = document.querySelector('.main-content');
         topNav.style.display = 'flex';
         mainContent.classList.remove('full-height');
-    } else {
-        topNav.style.display = 'none';
-        mainContent.classList.add('full-height');
+        
+        currentPage = pageId;
+        
+        // Update compose button appearance
+        updateComposeButtonState();
     }
-    
-    currentPage = pageId;
-    
-    // Reset pin mode when leaving home page (map)
-    if (pageId !== 'home' && isAddingPin) {
-        isAddingPin = false;
-    }
-    
-    // Update compose button appearance
-    updateComposeButtonState();
 }
 
 // Tab functionality
