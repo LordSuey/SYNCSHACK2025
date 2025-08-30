@@ -304,15 +304,15 @@ body {
     overflow: hidden;
 }
 
-#map-page.page {
+#home-page.page {
     padding: 0;
 }
 
-#map-page.page .map-container {
+#home-page.page .map-container {
     height: calc(100vh - 80px - 80px - env(safe-area-inset-bottom));
 }
 
-/* When top nav is hidden (map page) */
+/* When top nav is hidden (profile page) */
 .main-content.full-height .map-container {
     height: calc(100vh - 80px - env(safe-area-inset-bottom));
 }
@@ -411,39 +411,29 @@ body {
     color: #fff;
 }
 
-/* Floating Compose Button */
-.floating-compose-btn {
-    position: fixed;
-    bottom: calc(100px + env(safe-area-inset-bottom));
-    right: 20px;
-    width: 56px;
-    height: 56px;
+/* Compose Button in Navigation */
+.nav-btn.compose-nav {
+    position: relative;
+}
+
+.nav-btn.compose-nav .nav-icon {
     background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
-    border: none;
     border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4);
-    cursor: pointer;
-    z-index: 1000;
-    transition: all 0.3s ease;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.floating-compose-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
-}
-
-.floating-compose-btn:active {
-    transform: scale(0.95);
-}
-
-.floating-compose-btn .compose-icon {
-    font-size: 28px;
     color: #fff;
+    font-size: 20px;
     font-weight: bold;
-    line-height: 1;
+    margin-bottom: 4px;
+    transition: all 0.3s ease;
+}
+
+.nav-btn.compose-nav:hover .nav-icon {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
 }
 
 .nav-icon {
@@ -675,15 +665,10 @@ body {
         padding: 15px 10px 10px;
     }
     
-    .floating-compose-btn {
-        bottom: 90px;
-        right: 15px;
-        width: 50px;
-        height: 50px;
-    }
-    
-    .floating-compose-btn .compose-icon {
-        font-size: 24px;
+    .nav-btn.compose-nav .nav-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
     }
     
     .bottom-nav {

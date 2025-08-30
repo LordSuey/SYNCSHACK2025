@@ -73,8 +73,8 @@ function switchPage(pageId) {
     
     currentPage = pageId;
     
-    // Reset pin mode when leaving map page
-    if (pageId !== 'map' && isAddingPin) {
+    // Reset pin mode when leaving home page (map)
+    if (pageId !== 'home' && isAddingPin) {
         isAddingPin = false;
     }
     
@@ -153,7 +153,7 @@ function initializeCompose() {
 }
 
 function handleComposeClick() {
-    if (currentPage === 'map') {
+    if (currentPage === 'home') {
         togglePinMode();
     } else {
         openComposeModal();
@@ -176,17 +176,19 @@ function togglePinMode() {
 
 function updateComposeButtonState() {
     const composeIcon = composeNavBtn.querySelector('.compose-icon');
-    if (currentPage === 'map') {
+    const navIcon = composeNavBtn.querySelector('.nav-icon');
+    
+    if (currentPage === 'home') {
         if (isAddingPin) {
             composeIcon.textContent = '✓';
-            composeNavBtn.style.background = 'linear-gradient(135deg, #4CAF50, #66BB6A)';
+            navIcon.style.background = 'linear-gradient(135deg, #4CAF50, #66BB6A)';
         } else {
             composeIcon.textContent = '📍';
-            composeNavBtn.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
+            navIcon.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
         }
     } else {
         composeIcon.textContent = '+';
-        composeNavBtn.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
+        navIcon.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
     }
 }
 
