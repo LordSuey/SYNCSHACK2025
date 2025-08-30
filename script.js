@@ -2,6 +2,9 @@
 let currentPage = 'home';
 let currentCategory = 'foryou';
 let posts = [];
+let map;
+let placesService;
+let infoWindow;
 
 // DOM elements
 const navButtons = document.querySelectorAll('.nav-btn');
@@ -52,6 +55,18 @@ function switchPage(pageId) {
     const targetPage = document.getElementById(`${pageId}-page`);
     if (targetPage) {
         targetPage.classList.add('active');
+    }
+    
+    // Show/hide category tabs based on page
+    const categoryTabs = document.querySelector('.category-tabs');
+    const mainContent = document.querySelector('.main-content');
+    
+    if (pageId === 'home') {
+        categoryTabs.style.display = 'block';
+        mainContent.classList.remove('full-height');
+    } else {
+        categoryTabs.style.display = 'none';
+        mainContent.classList.add('full-height');
     }
     
     currentPage = pageId;
@@ -493,3 +508,199 @@ function refreshFeed() {
         showToast('Refresh complete');
     }, 1000);
 }
+
+// Google Maps functionality
+function initMap() {
+    // Use config for default location or fallback
+    const defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+    const defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+    
+    map = new google.maps.Map(document.getElementById('google-map'), {
+        zoom: defaultZoom,
+        center: defaultLocation,
+        styles: [
+            {
+                "elementType": "geometry",
+                "stylers": [{"color": "#212121"}]
+            },
+            {
+                "elementType": "labels.icon",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#757575"}]
+            },
+            {
+                "elementType": "labels.text.stroke",
+                "stylers": [{"color": "#212121"}]
+            },
+            {
+                "featureType": "administrative",
+                "elementType": "geometry",
+                "stylers": [{"color": "#757575"}]
+            },
+            {
+                "featureType": "administrative.country",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#9e9e9e"}]
+            },
+            {
+                "featureType": "road",
+                "elementType": "geometry.fill",
+                "stylers": [{"color": "#2c2c2c"}]
+            },
+            {
+                "featureType": "road",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#8a8a8a"}]
+            },
+            {
+                "featureType": "water",
+                "elementType": "geometry",
+                "stylers": [{"color": "#000000"}]
+            },
+            {
+                "featureType": "water",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#3d3d3d"}]
+            }
+        ],
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+    });
+
+    placesService = new google.maps.places.PlacesService(map);
+    infoWindow = new google.maps.InfoWindow();
+
+    // Try to get user location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                map.setCenter(pos);
+                
+                // Add marker for current location
+                new google.maps.Marker({
+                    position: pos,
+                    map: map,
+                    title: 'Your Location',
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: '#ff6b6b',
+                        fillOpacity: 1,
+                        strokeColor: '#fff',
+                        strokeWeight: 2
+                    }
+                });
+                
+                // Search for nearby places
+                searchNearbyPlaces(pos);
+            },
+            () => {
+                console.log('Location access denied');
+                searchNearbyPlaces(defaultLocation);
+            }
+        );
+    } else {
+        console.log('Geolocation not supported');
+        searchNearbyPlaces(defaultLocation);
+    }
+
+    // Setup search functionality
+    setupMapSearch();
+}
+
+function searchNearbyPlaces(location) {
+    const request = {
+        location: location,
+        radius: 1000,
+        type: ['restaurant', 'tourist_attraction', 'store']
+    };
+
+    placesService.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            results.slice(0, 10).forEach(place => {
+                createMarker(place);
+            });
+        }
+    });
+}
+
+function createMarker(place) {
+    const marker = new google.maps.Marker({
+        position: place.geometry.location,
+        map: map,
+        title: place.name,
+        icon: {
+            url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPg==',
+            scaledSize: new google.maps.Size(30, 30)
+        }
+    });
+
+    marker.addListener('click', () => {
+        const content = `
+            <div style="color: #333; max-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; color: #000;">${place.name}</h3>
+                <p style="margin: 0 0 8px 0; font-size: 14px;">${place.vicinity}</p>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="color: #ff6b6b;">⭐</span>
+                    <span style="font-size: 14px;">${place.rating || 'No rating'}</span>
+                </div>
+            </div>
+        `;
+        infoWindow.setContent(content);
+        infoWindow.open(map, marker);
+    });
+}
+
+function setupMapSearch() {
+    const searchInput = document.getElementById('map-search');
+    const searchBtn = document.getElementById('search-btn');
+    
+    if (!searchInput || !searchBtn) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(searchInput);
+    autocomplete.bindTo('bounds', map);
+
+    autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) return;
+
+        if (place.geometry.viewport) {
+            map.fitBounds(place.geometry.viewport);
+        } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(15);
+        }
+
+        createMarker(place);
+    });
+
+    searchBtn.addEventListener('click', () => {
+        const query = searchInput.value;
+        if (!query) return;
+
+        const request = {
+            query: query,
+            fields: ['name', 'geometry', 'rating', 'formatted_address']
+        };
+
+        placesService.findPlaceFromQuery(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                const place = results[0];
+                map.setCenter(place.geometry.location);
+                map.setZoom(15);
+                createMarker(place);
+            }
+        });
+    });
+}
+
+// Make initMap globally available for Google Maps callback
+window.initMap = initMap;

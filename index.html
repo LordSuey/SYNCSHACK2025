@@ -2,9 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AuthentiCITY">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Discover authentic places and share your experiences">
+    
     <title>AuthentiCITY - Social Feed</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iMjAiIGZpbGw9IiNmZjZiNmIiLz4KPHN2ZyB4PSI0NSIgeT0iNDUiIHdpZHRoPSI5MCIgaGVpZ2h0PSI5MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMlM2LjQ4IDIyIDEyIDIyUzIyIDE3LjUyIDIyIDEyUzE3LjUyIDIgMTIgMlpNMTEgMTlWMTNINVYxMUgxMVY1SDE0VjE5SDE0VjE5SDExWiIvPgo8L3N2Zz4KPC9zdmc+">
 </head>
 <body>
     <div class="app-container">
@@ -145,12 +156,15 @@
                 </div>
             </div>
 
-            <!-- Other pages placeholder -->
+            <!-- Map Page -->
             <div id="map-page" class="page">
-                <div class="page-content">
-                    <h2>Map</h2>
-                    <div class="map-placeholder">
-                        <p>🗺️ Map view coming soon</p>
+                <div class="map-container">
+                    <div id="google-map"></div>
+                    <div class="map-overlay">
+                        <div class="search-bar">
+                            <input type="text" id="map-search" placeholder="Search places...">
+                            <button id="search-btn">🔍</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -211,6 +225,61 @@
         </div>
     </div>
 
+    <!-- Load configuration first -->
+    <script src="config.js"></script>
     <script src="script.js"></script>
+    
+    <!-- Google Maps API - dynamically loaded with config -->
+    <script>
+        // Load Google Maps API with the API key from config
+        function loadGoogleMapsAPI() {
+            if (window.CONFIG && window.CONFIG.GOOGLE_MAPS_API_KEY && window.CONFIG.GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+                const script = document.createElement('script');
+                script.async = true;
+                script.defer = true;
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${window.CONFIG.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+                script.onerror = function() {
+                    console.error('Failed to load Google Maps API. Please check your API key.');
+                    showToast('Failed to load maps. Please check configuration.');
+                };
+                document.head.appendChild(script);
+            } else {
+                console.warn('Google Maps API key not found. Please add your API key to config.js');
+                showToast('Google Maps API key not configured. Check config.js file.');
+            }
+        }
+        
+        // Load the API when the page is ready
+        document.addEventListener('DOMContentLoaded', loadGoogleMapsAPI);
+    </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        
+        // Install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install button or prompt
+            showInstallPromotion();
+        });
+        
+        function showInstallPromotion() {
+            // You can show a custom install button here
+            console.log('App can be installed');
+        }
+    </script>
 </body>
 </html>
