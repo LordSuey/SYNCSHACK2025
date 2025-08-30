@@ -7,11 +7,11 @@ let placesService;
 let infoWindow;
 let isAddingPin = false;
 let userPins = [];
-let currentPinLocation = null;
 
 // DOM elements
 const navButtons = document.querySelectorAll('.nav-btn');
 const pages = document.querySelectorAll('.page');
+const tabButtons = document.querySelectorAll('.nav-tab');
 const composeNavBtn = document.getElementById('compose-nav');
 const modalOverlay = document.getElementById('modal-overlay');
 const closeModalBtn = document.getElementById('close-modal');
@@ -26,11 +26,10 @@ const postsFeed = document.getElementById('posts-feed');
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     initializeNavigation();
+    initializeTabs();
     initializeCompose();
     loadSamplePosts();
     addInteractiveFeatures();
-    initializePinModal();
-    loadUserPins();
 });
 
 // Navigation functionality
@@ -46,37 +45,58 @@ function initializeNavigation() {
 }
 
 function switchPage(pageId) {
-    // Update active nav button
-    navButtons.forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
+    // Only handle home page since profile is now separate
+    if (pageId === 'home') {
+        // Update active nav button
+        navButtons.forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+        
+        // Update active page
+        pages.forEach(page => page.classList.remove('active'));
+        const targetPage = document.getElementById(`${pageId}-page`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+        }
+        
+        // Show top navigation for home page
+        const topNav = document.querySelector('.top-nav');
+        const mainContent = document.querySelector('.main-content');
+        topNav.style.display = 'flex';
+        mainContent.classList.remove('full-height');
+        
+        currentPage = pageId;
+        
+        // Update compose button appearance
+        updateComposeButtonState();
     }
-    
-    // Update active page
-    pages.forEach(page => page.classList.remove('active'));
-    const targetPage = document.getElementById(`${pageId}-page`);
-    if (targetPage) {
-        targetPage.classList.add('active');
-    }
-    
-         // Since top navigation is removed, no need to show/hide it
-     const mainContent = document.querySelector('.main-content');
-     // Always use full height since there's no top nav
-     mainContent.classList.add('full-height');
-    
-    currentPage = pageId;
-    
-    // Reset pin mode when leaving home page (map)
-    if (pageId !== 'home' && isAddingPin) {
-        isAddingPin = false;
-    }
-    
-    // Update compose button appearance
-    updateComposeButtonState();
 }
 
-// Tab functionality removed since top navigation is deleted
+// Tab functionality
+function initializeTabs() {
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            switchCategory(category);
+        });
+    });
+}
+
+function switchCategory(category) {
+    // Update active tab
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    const activeTab = document.querySelector(`[data-category="${category}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+    
+    currentCategory = category;
+    
+    // Simulate loading different content
+    loadPostsByCategory(category);
+}
 
 function loadPostsByCategory(category) {
     // Add loading animation
@@ -533,9 +553,87 @@ function refreshFeed() {
 
 // Google Maps functionality
 function initMap() {
-    // Use config for default location or fallback
-    const defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
-    const defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+    // Check if there's a location redirect from profile page
+    const redirectLocation = localStorage.getItem('redirectToLocation');
+    let defaultLocation, defaultZoom;
+    
+    if (redirectLocation) {
+        try {
+            const locationData = JSON.parse(redirectLocation);
+            defaultLocation = { lat: locationData.lat, lng: locationData.lng };
+            defaultZoom = locationData.zoom || 15;
+            
+            // Clear the redirect data after using it
+            localStorage.removeItem('redirectToLocation');
+            
+            // Show a toast notification
+            setTimeout(() => {
+                if (locationData.type === 'achievement') {
+                    showToast(`Showing ${locationData.achievementTitle} location`);
+                } else {
+                    showToast(`Showing ${locationData.name}`);
+                }
+            }, 500);
+            
+            // Add a special marker for the user's location or achievement
+            if (locationData.type === 'achievement') {
+                // Add achievement marker
+                new google.maps.Marker({
+                    position: defaultLocation,
+                    map: map,
+                    title: locationData.achievementTitle,
+                    icon: {
+                        url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmZkNzAwIi8+Cjwvc3ZnPg==',
+                        scaledSize: new google.maps.Size(50, 50)
+                    }
+                });
+                
+                // Add achievement info window
+                const achievementInfoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="color: #333; max-width: 250px;">
+                            <h3 style="margin: 0 0 8px 0; color: #000; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">🏆</span>
+                                ${locationData.achievementTitle}
+                            </h3>
+                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
+                                <strong>Location:</strong> ${locationData.name}
+                            </p>
+                            <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffd700;">
+                                <span>⭐</span>
+                                <span>Achievement Unlocked!</span>
+                            </div>
+                        </div>
+                    `
+                });
+                
+                // Open info window automatically for achievements
+                setTimeout(() => {
+                    achievementInfoWindow.open(map, map.getCenter());
+                }, 1000);
+                
+            } else {
+                // Add regular location marker
+                new google.maps.Marker({
+                    position: defaultLocation,
+                    map: map,
+                    title: locationData.name,
+                    icon: {
+                        url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPg==',
+                        scaledSize: new google.maps.Size(40, 40)
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Error parsing location data:', e);
+            defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+            defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+        }
+    } else {
+        // Use config for default location or fallback
+        defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+        defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+    }
     
     map = new google.maps.Map(document.getElementById('google-map'), {
         zoom: defaultZoom,
@@ -640,12 +738,8 @@ function initMap() {
     // Setup map click for adding pins
     setupMapClickHandler();
     
-    // Load saved user pins
-    if (userPins.length > 0) {
-        userPins.forEach(pinData => {
-            createPinMarker(pinData);
-        });
-    }
+    // Setup achievements functionality
+    setupAchievements();
 }
 
 function searchNearbyPlaces(location) {
@@ -745,237 +839,63 @@ function setupMapClickHandler() {
 }
 
 function promptForPinDetails(lat, lng) {
-    // Create and show the pin creation modal
-    showPinCreationModal(lat, lng);
-}
-
-
-
-// Pin Creation Modal Functions
-function initializePinModal() {
-    const pinModalOverlay = document.getElementById('pin-modal-overlay');
-    const closePinModal = document.getElementById('close-pin-modal');
-    const cancelPinBtn = document.getElementById('cancel-pin-btn');
-    const createPinBtn = document.getElementById('create-pin-btn');
-    const pinTitle = document.getElementById('pin-title');
-    const pinDescription = document.getElementById('pin-description');
-    const pinPhotoBtn = document.getElementById('pin-photo-btn');
-    const pinPhoto = document.getElementById('pin-photo');
-    const pinImagePreview = document.getElementById('pin-image-preview');
-
-    // Close modal events
-    closePinModal.addEventListener('click', closePinCreationModal);
-    cancelPinBtn.addEventListener('click', closePinCreationModal);
-    pinModalOverlay.addEventListener('click', function(e) {
-        if (e.target === pinModalOverlay) {
-            closePinCreationModal();
-        }
-    });
-
-    // Photo upload
-    pinPhotoBtn.addEventListener('click', function() {
-        pinPhoto.click();
-    });
-
-    pinPhoto.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                pinImagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 120px; border-radius: 8px; margin-top: 8px;">`;
-                validatePinForm();
-            };
-            reader.readAsDataURL(file);
-        } else {
-            pinImagePreview.innerHTML = '';
-            validatePinForm();
-        }
-    });
-
-    // Form validation
-    pinTitle.addEventListener('input', validatePinForm);
-    pinDescription.addEventListener('input', validatePinForm);
-
-    // Create pin
-    createPinBtn.addEventListener('click', function() {
-        if (currentPinLocation) {
-            const title = pinTitle.value.trim();
-            const description = pinDescription.value.trim();
-            const category = document.querySelector('input[name="category"]:checked').value;
-            const customPhoto = pinImagePreview.querySelector('img')?.src || null;
-            
-            createUserPin(currentPinLocation.lat, currentPinLocation.lng, title, description, category, customPhoto);
-            closePinCreationModal();
-            
-            // Turn off pin mode
-            isAddingPin = false;
-            updateComposeButtonState();
-            document.getElementById('google-map').style.cursor = 'default';
-            
-            showToast('Pin saved successfully!');
-        }
-    });
-
-    // Enter key to submit
-    pinTitle.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && !createPinBtn.disabled) {
-            createPinBtn.click();
-        }
-    });
-}
-
-function showPinCreationModal(lat, lng) {
-    currentPinLocation = { lat, lng };
-    const pinModalOverlay = document.getElementById('pin-modal-overlay');
-    pinModalOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    
-    // Reset form (this already disables the button)
-    resetPinForm();
-    
-    document.getElementById('pin-title').focus();
-}
-
-function closePinCreationModal() {
-    const pinModalOverlay = document.getElementById('pin-modal-overlay');
-    pinModalOverlay.classList.remove('active');
-    document.body.style.overflow = '';
-    resetPinForm();
-    currentPinLocation = null;
-}
-
-function resetPinForm() {
-    document.getElementById('pin-title').value = '';
-    document.getElementById('pin-description').value = '';
-    document.getElementById('pin-photo').value = '';
-    document.getElementById('pin-image-preview').innerHTML = '';
-    document.querySelector('input[name="category"][value="landmark"]').checked = true;
-    document.getElementById('create-pin-btn').disabled = true;
-}
-
-function validatePinForm() {
-    const title = document.getElementById('pin-title').value.trim();
-    const createBtn = document.getElementById('create-pin-btn');
-    console.log('Pin validation - Button element found:', !!createBtn);
-    if (createBtn) {
-        const shouldDisable = title.length === 0;
-        createBtn.disabled = shouldDisable;
-        console.log('Pin validation - Title:', title, 'Button disabled:', shouldDisable);
+    const title = prompt('Enter a title for this location:');
+    if (title && title.trim()) {
+        const description = prompt('Enter a description (optional):') || '';
+        createUserPin(lat, lng, title.trim(), description.trim());
+        
+        // Turn off pin mode after adding a pin
+        isAddingPin = false;
+        updateComposeButtonState();
+        document.getElementById('google-map').style.cursor = 'default';
+        
+        showToast('Pin added successfully!');
     } else {
-        console.error('Create pin button not found!');
+        showToast('Pin creation cancelled');
     }
 }
 
-// Local Storage Functions
-function saveUserPins() {
-    try {
-        const pinsToSave = userPins.map(pin => ({
-            id: pin.id,
-            lat: pin.lat,
-            lng: pin.lng,
-            title: pin.title,
-            description: pin.description,
-            category: pin.category,
-            customPhoto: pin.customPhoto,
-            timestamp: pin.timestamp
-        }));
-        localStorage.setItem('userPins', JSON.stringify(pinsToSave));
-    } catch (error) {
-        console.error('Error saving pins to localStorage:', error);
-        showToast('Error saving pin');
-    }
-}
-
-function loadUserPins() {
-    try {
-        const savedPins = localStorage.getItem('userPins');
-        if (savedPins) {
-            const pinsData = JSON.parse(savedPins);
-            userPins = pinsData;
-            
-            // Create markers for loaded pins when map is ready
-            if (map) {
-                userPins.forEach(pinData => {
-                    createPinMarker(pinData);
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Error loading pins from localStorage:', error);
-        userPins = [];
-    }
-}
-
-function createPinMarker(pinData) {
-    // Always use the category icon for the pin marker
-    const iconUrl = `photo/${pinData.category}.webp`;
-    
-    const marker = new google.maps.Marker({
-        position: { lat: pinData.lat, lng: pinData.lng },
-        map: map,
-        title: pinData.title,
-        icon: {
-            url: iconUrl,
-            scaledSize: new google.maps.Size(40, 40),
-            anchor: new google.maps.Point(20, 40)
-        }
-    });
-
-    marker.addListener('click', () => {
-        // Build the info window content with photo at top, title, then description
-        let content = `<div style="color: #333; max-width: 250px;">`;
-        
-        // Show custom photo at the top if available
-        if (pinData.customPhoto) {
-            content += `<img src="${pinData.customPhoto}" alt="Custom photo" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 12px;">`;
-        }
-        
-        // Title
-        content += `<h3 style="margin: 0 0 8px 0; color: #000;">${pinData.title}</h3>`;
-        
-        // Description if available
-        if (pinData.description) {
-            content += `<p style="margin: 0 0 12px 0; font-size: 14px; line-height: 1.4;">${pinData.description}</p>`;
-        }
-        
-        // Category and timestamp info
-        content += `
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                    <img src="${iconUrl}" alt="${pinData.category}" style="width: 20px; height: 20px; object-fit: contain;">
-                    <span style="font-size: 12px; color: #666; text-transform: capitalize;">${pinData.category}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 11px; color: #999;">${new Date(pinData.timestamp).toLocaleDateString()}</span>
-                    <button onclick="deleteUserPin(${pinData.id})" style="background: #ff6b6b; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
-                </div>
-            </div>
-        `;
-        
-        infoWindow.setContent(content);
-        infoWindow.open(map, marker);
-    });
-    
-    // Store marker reference for deletion
-    pinData.marker = marker;
-    return marker;
-}
-
-// Updated createUserPin function
-function createUserPin(lat, lng, title, description, category, customPhoto) {
+function createUserPin(lat, lng, title, description) {
     const pinData = {
         id: Date.now(),
         lat: lat,
         lng: lng,
         title: title,
         description: description,
-        category: category,
-        customPhoto: customPhoto,
-        timestamp: new Date().toISOString()
+        timestamp: new Date()
     };
     
     userPins.push(pinData);
-    createPinMarker(pinData);
-    saveUserPins();
+    
+    // Create marker on map
+    const marker = new google.maps.Marker({
+        position: { lat: lat, lng: lng },
+        map: map,
+        title: title,
+        icon: {
+            url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjNGZhZjUwIi8+Cjwvc3ZnPg==',
+            scaledSize: new google.maps.Size(30, 30)
+        }
+    });
+
+    marker.addListener('click', () => {
+        const content = `
+            <div style="color: #333; max-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; color: #000;">${title}</h3>
+                ${description ? `<p style="margin: 0 0 8px 0; font-size: 14px;">${description}</p>` : ''}
+                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #666;">
+                    <span>📍</span>
+                    <span>Your Pin</span>
+                </div>
+                <button onclick="deleteUserPin(${pinData.id})" style="margin-top: 8px; background: #ff6b6b; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete Pin</button>
+            </div>
+        `;
+        infoWindow.setContent(content);
+        infoWindow.open(map, marker);
+    });
+    
+    // Store marker reference for deletion
+    pinData.marker = marker;
 }
 
 function deleteUserPin(pinId) {
@@ -991,9 +911,6 @@ function deleteUserPin(pinId) {
         // Remove from array
         userPins.splice(pinIndex, 1);
         
-        // Save to localStorage
-        saveUserPins();
-        
         // Close info window
         infoWindow.close();
         
@@ -1003,6 +920,138 @@ function deleteUserPin(pinId) {
 
 // Make functions globally available
 window.deleteUserPin = deleteUserPin;
+
+function setupAchievements() {
+    const achievementsBtn = document.getElementById('show-achievements-btn');
+    if (achievementsBtn) {
+        achievementsBtn.addEventListener('click', showAllAchievements);
+    }
+}
+
+function showAllAchievements() {
+    // Check if achievements are already shown
+    if (window.achievementMarkers && window.achievementMarkers.length > 0) {
+        // Hide achievements
+        window.achievementMarkers.forEach(marker => marker.setMap(null));
+        window.achievementMarkers = [];
+        
+        // Reset map to default view
+        map.setCenter({ lat: -33.8688, lng: 151.2093 });
+        map.setZoom(12);
+        
+        // Update button text
+        const achievementsBtn = document.getElementById('show-achievements-btn');
+        if (achievementsBtn) {
+            achievementsBtn.textContent = '🏆 Show Achievements';
+        }
+        
+        showToast('Achievements hidden');
+        return;
+    }
+    
+    // Define achievement locations (matching the ones in profile.html)
+    const achievements = [
+        {
+            title: "First Landing",
+            location: { lat: 33.875, lng: 151.2057 },
+            name: "Sydney Opera House",
+            icon: "✈️",
+            description: "AuthentiCITY: Complete your first check-in."
+        },
+        {
+            title: "City Explorer",
+            location: { lat: -33.8688, lng: 151.2093 },
+            name: "Bondi Beach",
+            icon: "📚",
+            description: "Visited 10 different cities in your region."
+        },
+        {
+            title: "Cultural Pioneer",
+            location: { lat: -33.8568, lng: 151.2153 },
+            name: "The Rocks",
+            icon: "🏛️",
+            description: "You discovered a hidden historical landmark."
+        },
+        {
+            title: "Map Architect",
+            location: { lat: -33.8688, lng: 151.2093 },
+            name: "Darling Harbour",
+            icon: "🗺️",
+            description: "Created 25 custom location pins."
+        },
+        {
+            title: "Global Citizen",
+            location: { lat: -33.9249, lng: 151.2596 },
+            name: "Manly Beach",
+            icon: "🌏",
+            description: "Visited places in 5 different countries."
+        },
+        {
+            title: "Storyteller",
+            location: { lat: -33.8688, lng: 151.2093 },
+            name: "Circular Quay",
+            icon: "💬",
+            description: "Shared 50 authentic experiences."
+        }
+    ];
+    
+    // Create markers for all achievements
+    window.achievementMarkers = [];
+    
+    achievements.forEach(achievement => {
+        const marker = new google.maps.Marker({
+            position: achievement.location,
+            map: map,
+            title: achievement.title,
+            icon: {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmZkNzAwIi8+Cjwvc3ZnPg==',
+                scaledSize: new google.maps.Size(35, 35)
+            }
+        });
+        
+        // Add click listener for achievement info
+        marker.addListener('click', () => {
+            const content = `
+                <div style="color: #333; max-width: 250px;">
+                    <h3 style="margin: 0 0 8px 0; color: #000; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 20px;">${achievement.icon}</span>
+                        ${achievement.title}
+                    </h3>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
+                        <strong>Location:</strong> ${achievement.name}
+                    </p>
+                    <p style="margin: 0 0 8px 0; font-size: 13px; color: #888;">
+                        ${achievement.description}
+                    </p>
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffd700;">
+                        <span>🏆</span>
+                        <span>Achievement Unlocked!</span>
+                    </div>
+                </div>
+            `;
+            infoWindow.setContent(content);
+            infoWindow.open(map, marker);
+        });
+        
+        window.achievementMarkers.push(marker);
+    });
+    
+    // Fit map to show all achievements
+    const bounds = new google.maps.LatLngBounds();
+    achievements.forEach(achievement => {
+        bounds.extend(achievement.location);
+    });
+    map.fitBounds(bounds);
+    
+    // Update button text
+    const achievementsBtn = document.getElementById('show-achievements-btn');
+    if (achievementsBtn) {
+        achievementsBtn.textContent = '🏆 Hide Achievements';
+    }
+    
+    // Show success message
+    showToast('Showing all achievement locations!');
+}
 
 // Make initMap globally available for Google Maps callback
 window.initMap = initMap;
