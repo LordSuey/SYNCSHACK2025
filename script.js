@@ -556,9 +556,87 @@ function refreshFeed() {
 
 // Google Maps functionality
 function initMap() {
-    // Use config for default location or fallback
-    const defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
-    const defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+    // Check if there's a location redirect from profile page
+    const redirectLocation = localStorage.getItem('redirectToLocation');
+    let defaultLocation, defaultZoom;
+    
+    if (redirectLocation) {
+        try {
+            const locationData = JSON.parse(redirectLocation);
+            defaultLocation = { lat: locationData.lat, lng: locationData.lng };
+            defaultZoom = locationData.zoom || 15;
+            
+            // Clear the redirect data after using it
+            localStorage.removeItem('redirectToLocation');
+            
+            // Show a toast notification
+            setTimeout(() => {
+                if (locationData.type === 'achievement') {
+                    showToast(`Showing ${locationData.achievementTitle} location`);
+                } else {
+                    showToast(`Showing ${locationData.name}`);
+                }
+            }, 500);
+            
+            // Add a special marker for the user's location or achievement
+            if (locationData.type === 'achievement') {
+                // Add achievement marker
+                new google.maps.Marker({
+                    position: defaultLocation,
+                    map: map,
+                    title: locationData.achievementTitle,
+                    icon: {
+                        url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmZkNzAwIi8+Cjwvc3ZnPg==',
+                        scaledSize: new google.maps.Size(50, 50)
+                    }
+                });
+                
+                // Add achievement info window
+                const achievementInfoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="color: #333; max-width: 250px;">
+                            <h3 style="margin: 0 0 8px 0; color: #000; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">🏆</span>
+                                ${locationData.achievementTitle}
+                            </h3>
+                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
+                                <strong>Location:</strong> ${locationData.name}
+                            </p>
+                            <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffd700;">
+                                <span>⭐</span>
+                                <span>Achievement Unlocked!</span>
+                            </div>
+                        </div>
+                    `
+                });
+                
+                // Open info window automatically for achievements
+                setTimeout(() => {
+                    achievementInfoWindow.open(map, map.getCenter());
+                }, 1000);
+                
+            } else {
+                // Add regular location marker
+                new google.maps.Marker({
+                    position: defaultLocation,
+                    map: map,
+                    title: locationData.name,
+                    icon: {
+                        url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPg==',
+                        scaledSize: new google.maps.Size(40, 40)
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Error parsing location data:', e);
+            defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+            defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+        }
+    } else {
+        // Use config for default location or fallback
+        defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+        defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+    }
     
     map = new google.maps.Map(document.getElementById('google-map'), {
         zoom: defaultZoom,
@@ -663,12 +741,17 @@ function initMap() {
     // Setup map click for adding pins
     setupMapClickHandler();
     
+
+    // Setup achievements functionality
+    setupAchievements();
+
     // Load saved user pins
     if (userPins.length > 0) {
         userPins.forEach(pinData => {
             createPinMarker(pinData);
         });
     }
+
 }
 
 function searchNearbyPlaces(location) {
@@ -1026,6 +1109,138 @@ function deleteUserPin(pinId) {
 
 // Make functions globally available
 window.deleteUserPin = deleteUserPin;
+
+function setupAchievements() {
+    const achievementsBtn = document.getElementById('show-achievements-btn');
+    if (achievementsBtn) {
+        achievementsBtn.addEventListener('click', showAllAchievements);
+    }
+}
+
+function showAllAchievements() {
+    // Check if achievements are already shown
+    if (window.achievementMarkers && window.achievementMarkers.length > 0) {
+        // Hide achievements
+        window.achievementMarkers.forEach(marker => marker.setMap(null));
+        window.achievementMarkers = [];
+        
+        // Reset map to default view
+        map.setCenter({ lat: -33.8688, lng: 151.2093 });
+        map.setZoom(12);
+        
+        // Update button text
+        const achievementsBtn = document.getElementById('show-achievements-btn');
+        if (achievementsBtn) {
+            achievementsBtn.textContent = '🏆 Show Achievements';
+        }
+        
+        showToast('Achievements hidden');
+        return;
+    }
+    
+    // Define achievement locations (matching the ones in profile.html)
+    const achievements = [
+        {
+            title: "First Landing",
+            location: { lat: 33.875, lng: 151.2057 },
+            name: "Sydney Opera House",
+            icon: "✈️",
+            description: "AuthentiCITY: Complete your first check-in."
+        },
+        {
+            title: "City Explorer",
+            location: { lat: -33.8688, lng: 151.2093 },
+            name: "Bondi Beach",
+            icon: "📚",
+            description: "Visited 10 different cities in your region."
+        },
+        {
+            title: "Cultural Pioneer",
+            location: { lat: -33.8568, lng: 151.2153 },
+            name: "The Rocks",
+            icon: "🏛️",
+            description: "You discovered a hidden historical landmark."
+        },
+        {
+            title: "Map Architect",
+            location: { lat: -33.8688, lng: 151.2093 },
+            name: "Darling Harbour",
+            icon: "🗺️",
+            description: "Created 25 custom location pins."
+        },
+        {
+            title: "Global Citizen",
+            location: { lat: -33.9249, lng: 151.2596 },
+            name: "Manly Beach",
+            icon: "🌏",
+            description: "Visited places in 5 different countries."
+        },
+        {
+            title: "Storyteller",
+            location: { lat: -33.8688, lng: 151.2093 },
+            name: "Circular Quay",
+            icon: "💬",
+            description: "Shared 50 authentic experiences."
+        }
+    ];
+    
+    // Create markers for all achievements
+    window.achievementMarkers = [];
+    
+    achievements.forEach(achievement => {
+        const marker = new google.maps.Marker({
+            position: achievement.location,
+            map: map,
+            title: achievement.title,
+            icon: {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmZkNzAwIi8+Cjwvc3ZnPg==',
+                scaledSize: new google.maps.Size(35, 35)
+            }
+        });
+        
+        // Add click listener for achievement info
+        marker.addListener('click', () => {
+            const content = `
+                <div style="color: #333; max-width: 250px;">
+                    <h3 style="margin: 0 0 8px 0; color: #000; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 20px;">${achievement.icon}</span>
+                        ${achievement.title}
+                    </h3>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
+                        <strong>Location:</strong> ${achievement.name}
+                    </p>
+                    <p style="margin: 0 0 8px 0; font-size: 13px; color: #888;">
+                        ${achievement.description}
+                    </p>
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffd700;">
+                        <span>🏆</span>
+                        <span>Achievement Unlocked!</span>
+                    </div>
+                </div>
+            `;
+            infoWindow.setContent(content);
+            infoWindow.open(map, marker);
+        });
+        
+        window.achievementMarkers.push(marker);
+    });
+    
+    // Fit map to show all achievements
+    const bounds = new google.maps.LatLngBounds();
+    achievements.forEach(achievement => {
+        bounds.extend(achievement.location);
+    });
+    map.fitBounds(bounds);
+    
+    // Update button text
+    const achievementsBtn = document.getElementById('show-achievements-btn');
+    if (achievementsBtn) {
+        achievementsBtn.textContent = '🏆 Hide Achievements';
+    }
+    
+    // Show success message
+    showToast('Showing all achievement locations!');
+}
 
 // Make initMap globally available for Google Maps callback
 window.initMap = initMap;
