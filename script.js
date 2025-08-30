@@ -12,7 +12,6 @@ let currentPinLocation = null;
 // DOM elements
 const navButtons = document.querySelectorAll('.nav-btn');
 const pages = document.querySelectorAll('.page');
-const tabButtons = document.querySelectorAll('.nav-tab');
 const composeNavBtn = document.getElementById('compose-nav');
 const modalOverlay = document.getElementById('modal-overlay');
 const closeModalBtn = document.getElementById('close-modal');
@@ -27,7 +26,6 @@ const postsFeed = document.getElementById('posts-feed');
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     initializeNavigation();
-    initializeTabs();
     initializeCompose();
     loadSamplePosts();
     addInteractiveFeatures();
@@ -62,17 +60,10 @@ function switchPage(pageId) {
         targetPage.classList.add('active');
     }
     
-    // Show/hide top navigation based on page
-    const topNav = document.querySelector('.top-nav');
-    const mainContent = document.querySelector('.main-content');
-    
-    if (pageId === 'home') {
-        topNav.style.display = 'flex';
-        mainContent.classList.remove('full-height');
-    } else {
-        topNav.style.display = 'none';
-        mainContent.classList.add('full-height');
-    }
+         // Since top navigation is removed, no need to show/hide it
+     const mainContent = document.querySelector('.main-content');
+     // Always use full height since there's no top nav
+     mainContent.classList.add('full-height');
     
     currentPage = pageId;
     
@@ -85,29 +76,7 @@ function switchPage(pageId) {
     updateComposeButtonState();
 }
 
-// Tab functionality
-function initializeTabs() {
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            switchCategory(category);
-        });
-    });
-}
-
-function switchCategory(category) {
-    // Update active tab
-    tabButtons.forEach(btn => btn.classList.remove('active'));
-    const activeTab = document.querySelector(`[data-category="${category}"]`);
-    if (activeTab) {
-        activeTab.classList.add('active');
-    }
-    
-    currentCategory = category;
-    
-    // Simulate loading different content
-    loadPostsByCategory(category);
-}
+// Tab functionality removed since top navigation is deleted
 
 function loadPostsByCategory(category) {
     // Add loading animation
