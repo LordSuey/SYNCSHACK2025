@@ -553,9 +553,44 @@ function refreshFeed() {
 
 // Google Maps functionality
 function initMap() {
-    // Use config for default location or fallback
-    const defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
-    const defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+    // Check if there's a location redirect from profile page
+    const redirectLocation = localStorage.getItem('redirectToLocation');
+    let defaultLocation, defaultZoom;
+    
+    if (redirectLocation) {
+        try {
+            const locationData = JSON.parse(redirectLocation);
+            defaultLocation = { lat: locationData.lat, lng: locationData.lng };
+            defaultZoom = locationData.zoom || 15;
+            
+            // Clear the redirect data after using it
+            localStorage.removeItem('redirectToLocation');
+            
+            // Show a toast notification
+            setTimeout(() => {
+                showToast(`Showing ${locationData.name}`);
+            }, 500);
+            
+            // Add a special marker for the user's location
+            new google.maps.Marker({
+                position: defaultLocation,
+                map: map,
+                title: locationData.name,
+                icon: {
+                    url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPg==',
+                    scaledSize: new google.maps.Size(40, 40)
+                }
+            });
+        } catch (e) {
+            console.error('Error parsing location data:', e);
+            defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+            defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+        }
+    } else {
+        // Use config for default location or fallback
+        defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+        defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+    }
     
     map = new google.maps.Map(document.getElementById('google-map'), {
         zoom: defaultZoom,

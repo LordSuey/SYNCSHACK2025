@@ -43,83 +43,145 @@
                 <div class="profile-avatar-large">
                     <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&h=120&fit=crop&crop=face" alt="Profile Picture" class="avatar-img">
                 </div>
-                <h2 class="profile-name">John Doe</h2>
-                <p class="profile-username">@johndoe</p>
-                <p class="profile-bio">Explorer of authentic places and hidden gems. Sharing my journey one pin at a time 📍</p>
-                
-                <div class="profile-stats">
-                    <div class="stat-item">
-                        <span class="stat-number">127</span>
-                        <span class="stat-label">Places</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number">1.2K</span>
-                        <span class="stat-label">Followers</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number">456</span>
-                        <span class="stat-label">Following</span>
-                    </div>
+                <h2 class="profile-name">Eric Su</h2>
+                <p class="profile-username">@LordSuey</p>
+                <p class="profile-bio">St John's Mazda driver</p>
+                <div class="location-tag" onclick="goToLocation()">
+                    <span class="location-icon">📍</span>
+                    <span class="location-text">Sydney, NSW, Australia</span>
+                    <span class="location-arrow">→</span>
                 </div>
+                
+
 
                 <button class="edit-profile-btn">Edit Profile</button>
             </section>
 
             <!-- Tabs -->
             <section class="profile-tabs">
-                <button class="profile-tab active" data-tab="pins">My Pins</button>
+                <button class="profile-tab active" data-tab="achievements">Achievements</button>
                 <button class="profile-tab" data-tab="saved">Saved</button>
-                <button class="profile-tab" data-tab="visited">Visited</button>
+                <button class="profile-tab" data-tab="seen">Seen</button>
             </section>
 
             <!-- Content Sections -->
             <section class="tab-content">
-                <div id="pins-content" class="tab-panel active">
-                    <div class="pins-grid">
-                        <div class="pin-item">
-                            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop" alt="Pin" class="pin-image">
-                            <div class="pin-info">
-                                <h4>Central Park</h4>
-                                <p>📍 New York, NY</p>
-                            </div>
-                        </div>
-                        <div class="pin-item">
-                            <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=200&h=200&fit=crop" alt="Pin" class="pin-image">
-                            <div class="pin-info">
-                                <h4>Golden Gate Bridge</h4>
-                                <p>📍 San Francisco, CA</p>
-                            </div>
-                        </div>
-                        <div class="pin-item">
-                            <img src="https://images.unsplash.com/photo-1520637836862-4d197d17c2a4?w=200&h=200&fit=crop" alt="Pin" class="pin-image">
-                            <div class="pin-info">
-                                <h4>Times Square</h4>
-                                <p>📍 New York, NY</p>
-                            </div>
-                        </div>
-                        <div class="pin-item">
-                            <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=200&h=200&fit=crop" alt="Pin" class="pin-image">
-                            <div class="pin-info">
-                                <h4>Venice Beach</h4>
-                                <p>📍 Los Angeles, CA</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                 <div id="achievements-content" class="tab-panel active">
+                     <div class="achievements-grid">
+                         <div class="achievement-item">
+                             <div class="achievement-icon">✈️</div>
+                             <div class="achievement-info">
+                                 <h4>First Landing</h4>
+                                 <p>AuthentiCITY: Complete your first check-in.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">89.2% of users have this</span>
+                                     <span class="achievement-date">Unlocked Dec 15, 2024, 2:30 PM</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status completed">✓</div>
+                         </div>
+                         <div class="achievement-item">
+                             <div class="achievement-icon">📚</div>
+                             <div class="achievement-info">
+                                 <h4>City Explorer</h4>
+                                 <p>Visited 10 different cities in your region.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">34.7% of users have this</span>
+                                     <span class="achievement-date">Unlocked Dec 10, 2024, 11:45 AM</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status completed">✓</div>
+                         </div>
+                         <div class="achievement-item">
+                             <div class="achievement-icon">🏛️</div>
+                             <div class="achievement-info">
+                                 <h4>Cultural Pioneer</h4>
+                                 <p>You discovered a hidden historical landmark.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">28.1% of users have this</span>
+                                     <span class="achievement-date">Unlocked Dec 8, 2024, 4:20 PM</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status completed">✓</div>
+                         </div>
+                         <div class="achievement-item">
+                             <div class="achievement-icon">🗺️</div>
+                             <div class="achievement-info">
+                                 <h4>Map Architect</h4>
+                                 <p>Created 25 custom location pins.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">Progress: 8/25</span>
+                                     <span class="achievement-date">Last pin: Dec 12, 2024</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status">8/25</div>
+                         </div>
+                         <div class="achievement-item">
+                             <div class="achievement-icon">🌏</div>
+                             <div class="achievement-info">
+                                 <h4>Global Citizen</h4>
+                                 <p>Visited places in 5 different countries.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">Progress: 2/5</span>
+                                     <span class="achievement-date">Last country: Australia</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status">2/5</div>
+                         </div>
+                         <div class="achievement-item">
+                             <div class="achievement-icon">💬</div>
+                             <div class="achievement-info">
+                                 <h4>Storyteller</h4>
+                                 <p>Shared 50 authentic experiences.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">Progress: 23/50</span>
+                                     <span class="achievement-date">Last story: Dec 14, 2024</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status">23/50</div>
+                         </div>
+                     </div>
+                 </div>
 
                 <div id="saved-content" class="tab-panel">
-                    <div class="empty-state">
-                        <span class="empty-icon">🔖</span>
-                        <h3>No saved places yet</h3>
-                        <p>Start exploring and save places you want to visit!</p>
+                    <div class="saved-grid">
+                        <div class="saved-item">
+                            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop" alt="Saved Place" class="saved-image">
+                            <div class="saved-info">
+                                <h4>Central Park</h4>
+                                <p>📍 New York, NY</p>
+                                <span class="saved-date">Saved 2 days ago</span>
+                            </div>
+                        </div>
+                        <div class="saved-item">
+                            <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=200&h=200&fit=crop" alt="Saved Place" class="saved-image">
+                            <div class="saved-info">
+                                <h4>Golden Gate Bridge</h4>
+                                <p>📍 San Francisco, CA</p>
+                                <span class="saved-date">Saved 1 week ago</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div id="visited-content" class="tab-panel">
-                    <div class="empty-state">
-                        <span class="empty-icon">✅</span>
-                        <h3>No visited places yet</h3>
-                        <p>Mark places as visited when you explore them!</p>
+                <div id="seen-content" class="tab-panel">
+                    <div class="seen-grid">
+                        <div class="seen-item">
+                            <img src="https://images.unsplash.com/photo-1520637836862-4d197d17c2a4?w=200&h=200&fit=crop" alt="Seen Place" class="seen-image">
+                            <div class="seen-info">
+                                <h4>Times Square</h4>
+                                <p>📍 New York, NY</p>
+                                <span class="seen-date">Visited 3 days ago</span>
+                            </div>
+                        </div>
+                        <div class="seen-item">
+                            <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=200&h=200&fit=crop" alt="Seen Place" class="seen-image">
+                            <div class="seen-info">
+                                <h4>Venice Beach</h4>
+                                <p>📍 Los Angeles, CA</p>
+                                <span class="seen-date">Visited 2 weeks ago</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

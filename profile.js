@@ -1,23 +1,14 @@
 // Profile page functionality
-
-// DOM elements
-const profileTabs = document.querySelectorAll('.profile-tab');
-const tabPanels = document.querySelectorAll('.tab-panel');
-const modalOverlay = document.getElementById('modal-overlay');
-const postTitle = document.getElementById('post-title');
-const postImage = document.getElementById('post-image');
-const imagePreview = document.getElementById('image-preview');
-const postBtn = document.querySelector('.post-btn');
-
-// Initialize profile page
 document.addEventListener('DOMContentLoaded', function() {
     initializeProfileTabs();
-    initializeImageUpload();
-    initializePostValidation();
+    initializeInteractiveFeatures();
 });
 
 // Profile tabs functionality
 function initializeProfileTabs() {
+    const profileTabs = document.querySelectorAll('.profile-tab');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    
     profileTabs.forEach(tab => {
         tab.addEventListener('click', function() {
             const targetTab = this.getAttribute('data-tab');
@@ -26,86 +17,113 @@ function initializeProfileTabs() {
     });
 }
 
-function switchProfileTab(tabName) {
-    // Update active tab
+function switchProfileTab(tabId) {
+    // Update active profile tab
+    const profileTabs = document.querySelectorAll('.profile-tab');
     profileTabs.forEach(tab => tab.classList.remove('active'));
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    const activeTab = document.querySelector(`[data-tab="${tabId}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
     
-    // Update active panel
+    // Update active tab panel
+    const tabPanels = document.querySelectorAll('.tab-panel');
     tabPanels.forEach(panel => panel.classList.remove('active'));
-    document.getElementById(`${tabName}-content`).classList.add('active');
-}
-
-// Modal functionality
-function openAddModal() {
-    modalOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    postTitle.focus();
-}
-
-function closeAddModal() {
-    modalOverlay.classList.remove('active');
-    document.body.style.overflow = '';
-    resetForm();
-}
-
-function resetForm() {
-    postTitle.value = '';
-    postImage.value = '';
-    imagePreview.innerHTML = '';
-    postBtn.disabled = true;
-}
-
-// Image upload functionality
-function initializeImageUpload() {
-    postImage.addEventListener('change', handleImageUpload);
-}
-
-function handleImageUpload(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px;">`;
-            validateForm();
-        };
-        reader.readAsDataURL(file);
+    const targetPanel = document.getElementById(`${tabId}-content`);
+    if (targetPanel) {
+        targetPanel.classList.add('active');
     }
 }
 
-// Form validation
-function initializePostValidation() {
-    postTitle.addEventListener('input', validateForm);
-}
-
-function validateForm() {
-    const hasTitle = postTitle.value.trim().length > 0;
-    const hasImage = postImage.files.length > 0 || imagePreview.innerHTML.includes('img');
+// Interactive features
+function initializeInteractiveFeatures() {
+    // Back button functionality
+    const backBtn = document.querySelector('.back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', goBack);
+    }
     
-    postBtn.disabled = !(hasTitle && hasImage);
+    // Settings button functionality
+    const settingsBtn = document.querySelector('.settings-btn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', function() {
+            showToast('Settings functionality coming soon!');
+        });
+    }
+    
+    // Edit profile button functionality
+    const editProfileBtn = document.querySelector('.edit-profile-btn');
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', function() {
+            showToast('Edit profile functionality coming soon!');
+        });
+    }
+    
+    // Achievement items click handlers
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.achievement-item')) {
+            const achievementItem = e.target.closest('.achievement-item');
+            const title = achievementItem.querySelector('h4').textContent;
+            showToast(`Achievement: ${title}`);
+        }
+        
+        // Saved items click handlers
+        if (e.target.closest('.saved-item')) {
+            const savedItem = e.target.closest('.saved-item');
+            const title = savedItem.querySelector('h4').textContent;
+            showToast(`Opening saved place: ${title}`);
+        }
+        
+        // Seen items click handlers
+        if (e.target.closest('.seen-item')) {
+            const seenItem = e.target.closest('.seen-item');
+            const title = seenItem.querySelector('h4').textContent;
+            showToast(`Opening visited place: ${title}`);
+        }
+    });
 }
 
-// Navigation
+// Navigation functions
 function goBack() {
     window.history.back();
 }
 
-// Close modal on outside click
-modalOverlay.addEventListener('click', function(e) {
-    if (e.target === modalOverlay) {
-        closeAddModal();
-    }
-});
+// Location functions
+function goToLocation() {
+    // Store the location data in localStorage so the map page can access it
+    const locationData = {
+        lat: 33.875, // St John's, Newfoundland coordinates
+        lng: 151.2057,
+        name: "Sydney, NSW, Australia",
+        zoom: 12
+    };
+    
+    localStorage.setItem('redirectToLocation', JSON.stringify(locationData));
+    
+    // Redirect to the main page (map)
+    window.location.href = 'index.html';
+}
 
-// Close modal on escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
-        closeAddModal();
+// Modal functions
+function openAddModal() {
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
-});
+}
+
+function closeAddModal() {
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
 
 // Toast notification function
 function showToast(message) {
+    // Create toast element
     const toast = document.createElement('div');
     toast.style.cssText = `
         position: fixed;
@@ -126,10 +144,12 @@ function showToast(message) {
     
     document.body.appendChild(toast);
     
+    // Show toast
     setTimeout(() => {
         toast.style.opacity = '1';
     }, 10);
     
+    // Hide and remove toast
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => {
@@ -140,23 +160,22 @@ function showToast(message) {
     }, 3000);
 }
 
-// Post submission
-postBtn.addEventListener('click', function() {
-    const title = postTitle.value.trim();
-    const imageFile = postImage.files[0];
-    
-    if (!title || (!imageFile && !imagePreview.innerHTML.includes('img'))) {
-        return;
+// Handle escape key to close modal
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (modalOverlay && modalOverlay.classList.contains('active')) {
+            closeAddModal();
+        }
     }
-    
-    // Simulate post creation
-    showToast('Post created successfully!');
-    closeAddModal();
 });
 
-// Handle enter key in title field
-postTitle.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter' && !postBtn.disabled) {
-        postBtn.click();
+// Prevent zoom on double tap for iOS
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(event) {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
     }
-});
+    lastTouchEnd = now;
+}, false);
