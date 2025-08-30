@@ -21,22 +21,7 @@
     <div class="app-container">
 
 
-        <!-- Top Navigation -->
-        <div class="top-nav">
-            <button class="menu-btn">
-                <span class="menu-icon">☰</span>
-            </button>
-            <div class="nav-tabs">
-                <button class="nav-tab active" data-category="foryou">For You</button>
-                <button class="nav-tab" data-category="nearby">Nearby</button>
-            </div>
-            <button class="search-btn">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-            </button>
-        </div>
+
 
         <!-- Main Content -->
         <main class="main-content">
@@ -92,6 +77,67 @@
             <div class="modal-footer">
                 <button class="cancel-btn" id="cancel-btn">Cancel</button>
                 <button class="post-btn" id="post-btn" disabled>Post</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pin Creation Modal -->
+    <div class="modal-overlay" id="pin-modal-overlay">
+        <div class="compose-modal pin-modal">
+            <div class="modal-header">
+                <h3>Add Pin</h3>
+                <button class="close-btn" id="close-pin-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="pin-title" placeholder="Enter location name..." maxlength="50">
+                <textarea id="pin-description" placeholder="Add a description (optional)..." rows="3"></textarea>
+                
+                <div class="category-selection">
+                    <h4>Choose Category:</h4>
+                    <div class="category-options">
+                        <label class="category-option">
+                            <input type="radio" name="category" value="landmark" checked>
+                            <div class="category-icon">
+                                <img src="photo/landmark.webp" alt="Landmark">
+                                <span>Landmark</span>
+                            </div>
+                        </label>
+                        <label class="category-option">
+                            <input type="radio" name="category" value="nature">
+                            <div class="category-icon">
+                                <img src="photo/nature.webp" alt="Nature">
+                                <span>Nature</span>
+                            </div>
+                        </label>
+                        <label class="category-option">
+                            <input type="radio" name="category" value="meme">
+                            <div class="category-icon">
+                                <img src="photo/meme.webp" alt="Meme">
+                                <span>Meme</span>
+                            </div>
+                        </label>
+                        <label class="category-option">
+                            <input type="radio" name="category" value="event">
+                            <div class="category-icon">
+                                <img src="photo/event.webp" alt="Event">
+                                <span>Event</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="photo-option">
+                    <h4>Custom Photo (Optional):</h4>
+                    <input type="file" id="pin-photo" accept="image/*" style="display: none;">
+                    <button class="image-upload-btn" id="pin-photo-btn">
+                        📷 Upload Photo
+                    </button>
+                    <div class="image-preview" id="pin-image-preview"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" id="cancel-pin-btn">Cancel</button>
+                <button class="post-btn" id="create-pin-btn" disabled>Create Pin</button>
             </div>
         </div>
     </div>
