@@ -774,7 +774,7 @@ function initMap() {
             }
         } catch (e) {
             console.error('Error parsing location data:', e);
-            defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+            defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: -33.8688, lng: 151.2093 };
             defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
         }
     } else {
@@ -887,7 +887,16 @@ function initMap() {
     setupMapClickHandler();
     
     // Load saved pins from localStorage
+    console.log('Map initialized, loading pins...');
     loadPinsFromStorage();
+    
+    // Center map to show all hard-coded pins
+    const hardCodedBounds = new google.maps.LatLngBounds();
+    hardCodedBounds.extend({ lat: -33.88036830097366, lng: 151.20427651239518 }); // Haymarket cat
+    hardCodedBounds.extend({ lat: -33.89159793495311, lng: 151.1952780812729 }); // Redfern cat
+    hardCodedBounds.extend({ lat: -33.863530954674445, lng: 151.01858344807906 }); // Auburn Cherry Blossom
+    map.fitBounds(hardCodedBounds);
+    map.setZoom(Math.max(map.getZoom(), 11)); // Ensure minimum zoom level
     
     // Setup achievements functionality
     setupAchievements();
@@ -985,25 +994,23 @@ let pendingPinLocation = null;
 // File-based storage functions for pins
 async function savePinsToStorage() {
     try {
-        // Remove marker references before saving (can't serialize DOM objects)
-        const pinsToSave = userPins.map(pin => {
-            const { marker, ...pinData } = pin;
-            return pinData;
-        });
+        // Filter out hard-coded pins and remove marker references before saving
+        const pinsToSave = userPins
+            .filter(pin => pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) // Exclude hard-coded pins
+            .map(pin => {
+                const { marker, ...pinData } = pin;
+                return pinData;
+            });
         
         // Create a downloadable JSON file
         const dataStr = JSON.stringify(pinsToSave, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         
         // For development: log the data that would be saved
-        console.log('Pins data to save:', pinsToSave.length, 'pins');
+        console.log('User pins data to save:', pinsToSave.length, 'pins (excluding hard-coded)');
         console.log('JSON data:', dataStr);
         
-        // Since we can't directly write files in a static site, we'll use a combination approach:
-        // 1. Keep localStorage as backup
-        // 2. Provide download functionality
-        // 3. Allow manual file upload
-        
+        // Save only user-created pins to localStorage
         localStorage.setItem('userPins', JSON.stringify(pinsToSave));
         
         // Auto-download the pins file for local storage
@@ -1014,64 +1021,82 @@ async function savePinsToStorage() {
     }
 }
 
-async function loadPinsFromStorage() {
+function loadPinsFromStorage() {
     try {
-        // Try to load from localStorage first (fallback)
+        // Hard-coded pin data
+        const hardCodedPins = [
+            {
+                id: 1756574202596,
+                lat: -33.88036830097366,
+                lng: 151.20427651239518,
+                title: "Haymarket cat",
+                description: "Friendly Orange Cat",
+                category: "meme",
+                timestamp: new Date("2025-08-30T17:16:42.596Z")
+            },
+            {
+                id: 1756576515738,
+                lat: -33.89159793495311,
+                lng: 151.1952780812729,
+                title: "Redfern cat",
+                description: "Whisky the chonky, orange & white cat",
+                category: "meme",
+                timestamp: new Date("2025-08-30T17:55:15.738Z")
+            },
+            {
+                id: 1756576659444,
+                lat: -33.863530954674445,
+                lng: 151.01858344807906,
+                title: "Auburn Cherry Blossom",
+                description: "",
+                category: "landmark",
+                timestamp: new Date("2025-08-30T17:57:39.444Z")
+            }
+        ];
+        
+        // Try to load from localStorage first (for user-created pins)
         const savedPins = localStorage.getItem('userPins');
+        let userCreatedPins = [];
         if (savedPins) {
             const parsedPins = JSON.parse(savedPins);
-            console.log('Loading pins from localStorage fallback:', parsedPins.length, 'pins');
+            console.log('Loading user pins from localStorage:', parsedPins.length, 'pins');
             
-            // Clear current pins and reload from storage
-            userPins = [];
-            
-            // Recreate each pin and its marker
-            parsedPins.forEach(pinData => {
+            // Recreate each user pin
+            userCreatedPins = parsedPins.map(pinData => {
                 // Convert timestamp back to Date object
                 pinData.timestamp = new Date(pinData.timestamp);
-                userPins.push(pinData);
-                
-                // Create marker if Google Maps is available
-                if (typeof google !== 'undefined' && google.maps && map) {
-                    createPinMarker(pinData);
-                }
+                return pinData;
             });
-            
-            console.log('Successfully loaded', userPins.length, 'pins from storage');
         }
         
-        // Try to load from local file
-        try {
-            const response = await fetch('data/pins.json');
-            if (response.ok) {
-                const filePins = await response.json();
-                if (filePins && filePins.length > 0) {
-                    console.log('Loading pins from file:', filePins.length, 'pins');
-                    
-                    // Clear current pins and reload from file
-                    userPins.forEach(pin => {
-                        if (pin.marker) {
-                            pin.marker.setMap(null);
-                        }
-                    });
-                    userPins = [];
-                    
-                    // Recreate each pin from file
-                    filePins.forEach(pinData => {
-                        pinData.timestamp = new Date(pinData.timestamp);
-                        userPins.push(pinData);
-                        
-                        if (typeof google !== 'undefined' && google.maps && map) {
-                            createPinMarker(pinData);
-                        }
-                    });
-                    
-                    console.log('Successfully loaded', userPins.length, 'pins from file');
-                }
+        // Clear current pins and reload
+        userPins = [];
+        
+        // Add hard-coded pins first
+        hardCodedPins.forEach(pinData => {
+            userPins.push(pinData);
+            console.log('Adding hard-coded pin:', pinData);
+            
+            // Create marker if Google Maps is available
+            if (typeof google !== 'undefined' && google.maps && map) {
+                console.log('Creating marker for hard-coded pin');
+                createPinMarker(pinData);
+            } else {
+                console.log('Google Maps not ready yet for hard-coded pin');
             }
-        } catch (fileError) {
-            console.log('Could not load from file, using localStorage data');
-        }
+        });
+        
+        // Add user-created pins
+        userCreatedPins.forEach(pinData => {
+            userPins.push(pinData);
+            
+            // Create marker if Google Maps is available
+            if (typeof google !== 'undefined' && google.maps && map) {
+                createPinMarker(pinData);
+            }
+        });
+        
+        console.log('Successfully loaded', userPins.length, 'pins (including hard-coded)');
         
     } catch (error) {
         console.error('Error loading pins:', error);
@@ -1080,10 +1105,12 @@ async function loadPinsFromStorage() {
 
 function downloadPinsFile() {
     try {
-        const pinsToSave = userPins.map(pin => {
-            const { marker, ...pinData } = pin;
-            return pinData;
-        });
+        const pinsToSave = userPins
+            .filter(pin => pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) // Exclude hard-coded pins
+            .map(pin => {
+                const { marker, ...pinData } = pin;
+                return pinData;
+            });
         
         const dataStr = JSON.stringify(pinsToSave, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -1098,22 +1125,22 @@ function downloadPinsFile() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        showToast('Pins file downloaded to your Downloads folder');
+        showToast('User pins file downloaded to your Downloads folder');
     } catch (error) {
         console.error('Error downloading pins file:', error);
     }
 }
 
 function clearAllPins() {
-    // Remove all markers from map
+    // Remove only user-created markers from map, keep hard-coded pins
     userPins.forEach(pin => {
-        if (pin.marker) {
+        if (pin.marker && pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) {
             pin.marker.setMap(null);
         }
     });
     
-    // Clear arrays and storage
-    userPins = [];
+    // Keep hard-coded pins, remove only user-created ones
+    userPins = userPins.filter(pin => pin.id === 1756574202596 || pin.id === 1756576515738 || pin.id === 1756576659444);
     localStorage.removeItem('userPins');
     
     // Also clear the file by downloading an empty one
@@ -1130,8 +1157,8 @@ function clearAllPins() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    console.log('All pins cleared from map and storage');
-    showToast('All pins cleared - empty pins.json downloaded');
+    console.log('User pins cleared from map and storage (hard-coded pins preserved)');
+    showToast('User pins cleared - hard-coded pins preserved');
 }
 
 function loadPinsFromFile() {
@@ -1285,8 +1312,13 @@ function createUserPin(lat, lng, title, description, category, customPhoto) {
 }
 
 function createPinMarker(pinData) {
-    // Always use the category icon for the pin marker
+    console.log('createPinMarker called with:', pinData);
+    
+    // Always use the category icon for the pin marker on the map
     const iconUrl = `photo/${pinData.category}.webp`;
+    console.log('Using category icon:', iconUrl);
+    
+    console.log('Creating marker at:', pinData.lat, pinData.lng, 'with icon:', iconUrl);
     
     const marker = new google.maps.Marker({
         position: { lat: pinData.lat, lng: pinData.lng },
@@ -1299,6 +1331,8 @@ function createPinMarker(pinData) {
         }
     });
 
+    console.log('Marker created successfully');
+
     marker.addListener('click', () => {
         showPinDetails(pinData);
     });
@@ -1308,6 +1342,9 @@ function createPinMarker(pinData) {
 }
 
 function showPinDetails(pinData) {
+    console.log('showPinDetails called with pinData:', pinData);
+    console.log('Pin ID:', pinData.id, 'Type:', typeof pinData.id);
+    
     const modal = document.getElementById('pin-details-overlay');
     const photo = document.getElementById('pin-details-photo');
     const title = document.getElementById('pin-details-title');
@@ -1316,13 +1353,32 @@ function showPinDetails(pinData) {
     
     // Set photo
     if (pinData.customPhoto) {
+        console.log('Using custom photo:', pinData.customPhoto);
         photo.src = pinData.customPhoto;
         photo.style.display = 'block';
+    } else if (pinData.id === 1756574202596) {
+        // Use Haymarket cat image for the specific hard-coded pin
+        console.log('Using Haymarket cat image');
+        photo.src = 'photo/Haymarket cat.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756576515738) {
+        // Use Redfern cat image for the specific hard-coded pin
+        console.log('Using Redfern cat image');
+        photo.src = 'photo/redfern cat.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756576659444) {
+        // Use Cherry Blossom image for the specific hard-coded pin
+        console.log('Using Cherry Blossom image');
+        photo.src = 'photo/cherry blossom.png';
+        photo.style.display = 'block';
     } else {
+        console.log('Using category icon for category:', pinData.category);
         const categoryData = categoryConfig[pinData.category];
         photo.src = categoryData.icon;
         photo.style.display = 'block';
     }
+    
+    console.log('Final photo src:', photo.src);
     
     // Set content
     title.textContent = pinData.title;
