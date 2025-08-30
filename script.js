@@ -886,6 +886,9 @@ function initMap() {
     // Setup map click for adding pins
     setupMapClickHandler();
     
+    // Load saved pins from localStorage
+    loadPinsFromStorage();
+    
     // Setup achievements functionality
     setupAchievements();
 }
@@ -979,6 +982,215 @@ function setupMapSearch() {
 // Pin creation variables
 let pendingPinLocation = null;
 
+// File-based storage functions for pins
+async function savePinsToStorage() {
+    try {
+        // Remove marker references before saving (can't serialize DOM objects)
+        const pinsToSave = userPins.map(pin => {
+            const { marker, ...pinData } = pin;
+            return pinData;
+        });
+        
+        // Create a downloadable JSON file
+        const dataStr = JSON.stringify(pinsToSave, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        // For development: log the data that would be saved
+        console.log('Pins data to save:', pinsToSave.length, 'pins');
+        console.log('JSON data:', dataStr);
+        
+        // Since we can't directly write files in a static site, we'll use a combination approach:
+        // 1. Keep localStorage as backup
+        // 2. Provide download functionality
+        // 3. Allow manual file upload
+        
+        localStorage.setItem('userPins', JSON.stringify(pinsToSave));
+        
+        // Auto-download the pins file for local storage
+        downloadPinsFile();
+        
+    } catch (error) {
+        console.error('Error saving pins to file:', error);
+    }
+}
+
+async function loadPinsFromStorage() {
+    try {
+        // Try to load from localStorage first (fallback)
+        const savedPins = localStorage.getItem('userPins');
+        if (savedPins) {
+            const parsedPins = JSON.parse(savedPins);
+            console.log('Loading pins from localStorage fallback:', parsedPins.length, 'pins');
+            
+            // Clear current pins and reload from storage
+            userPins = [];
+            
+            // Recreate each pin and its marker
+            parsedPins.forEach(pinData => {
+                // Convert timestamp back to Date object
+                pinData.timestamp = new Date(pinData.timestamp);
+                userPins.push(pinData);
+                
+                // Create marker if Google Maps is available
+                if (typeof google !== 'undefined' && google.maps && map) {
+                    createPinMarker(pinData);
+                }
+            });
+            
+            console.log('Successfully loaded', userPins.length, 'pins from storage');
+        }
+        
+        // Try to load from local file
+        try {
+            const response = await fetch('data/pins.json');
+            if (response.ok) {
+                const filePins = await response.json();
+                if (filePins && filePins.length > 0) {
+                    console.log('Loading pins from file:', filePins.length, 'pins');
+                    
+                    // Clear current pins and reload from file
+                    userPins.forEach(pin => {
+                        if (pin.marker) {
+                            pin.marker.setMap(null);
+                        }
+                    });
+                    userPins = [];
+                    
+                    // Recreate each pin from file
+                    filePins.forEach(pinData => {
+                        pinData.timestamp = new Date(pinData.timestamp);
+                        userPins.push(pinData);
+                        
+                        if (typeof google !== 'undefined' && google.maps && map) {
+                            createPinMarker(pinData);
+                        }
+                    });
+                    
+                    console.log('Successfully loaded', userPins.length, 'pins from file');
+                }
+            }
+        } catch (fileError) {
+            console.log('Could not load from file, using localStorage data');
+        }
+        
+    } catch (error) {
+        console.error('Error loading pins:', error);
+    }
+}
+
+function downloadPinsFile() {
+    try {
+        const pinsToSave = userPins.map(pin => {
+            const { marker, ...pinData } = pin;
+            return pinData;
+        });
+        
+        const dataStr = JSON.stringify(pinsToSave, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'pins.json';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast('Pins file downloaded to your Downloads folder');
+    } catch (error) {
+        console.error('Error downloading pins file:', error);
+    }
+}
+
+function clearAllPins() {
+    // Remove all markers from map
+    userPins.forEach(pin => {
+        if (pin.marker) {
+            pin.marker.setMap(null);
+        }
+    });
+    
+    // Clear arrays and storage
+    userPins = [];
+    localStorage.removeItem('userPins');
+    
+    // Also clear the file by downloading an empty one
+    const emptyData = JSON.stringify([], null, 2);
+    const dataBlob = new Blob([emptyData], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'pins.json';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    console.log('All pins cleared from map and storage');
+    showToast('All pins cleared - empty pins.json downloaded');
+}
+
+function loadPinsFromFile() {
+    const fileInput = document.getElementById('pins-file-input');
+    fileInput.click();
+}
+
+// Initialize file upload handler
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('pins-file-input');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/json') {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const pinsData = JSON.parse(event.target.result);
+                        
+                        // Clear existing pins
+                        userPins.forEach(pin => {
+                            if (pin.marker) {
+                                pin.marker.setMap(null);
+                            }
+                        });
+                        userPins = [];
+                        
+                        // Load pins from file
+                        pinsData.forEach(pinData => {
+                            pinData.timestamp = new Date(pinData.timestamp);
+                            userPins.push(pinData);
+                            
+                            if (typeof google !== 'undefined' && google.maps && map) {
+                                createPinMarker(pinData);
+                            }
+                        });
+                        
+                        // Save to localStorage as backup
+                        localStorage.setItem('userPins', JSON.stringify(pinsData));
+                        
+                        showToast(`Loaded ${pinsData.length} pins from file`);
+                        console.log('Successfully loaded pins from uploaded file');
+                        
+                    } catch (error) {
+                        console.error('Error parsing pins file:', error);
+                        showToast('Error: Invalid pins file format');
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                showToast('Please select a valid JSON file');
+            }
+            
+            // Reset file input
+            e.target.value = '';
+        });
+    }
+});
+
 function setupMapClickHandler() {
     map.addListener('click', (event) => {
         if (isAddingPin) {
@@ -1067,6 +1279,9 @@ function createUserPin(lat, lng, title, description, category, customPhoto) {
     } else {
         console.warn('Google Maps not available, storing pin data only');
     }
+    
+    // Save to localStorage
+    savePinsToStorage();
 }
 
 function createPinMarker(pinData) {
@@ -1133,6 +1348,9 @@ function deleteUserPin(pinId) {
         
         // Remove from array
         userPins.splice(pinIndex, 1);
+        
+        // Update localStorage
+        savePinsToStorage();
         
         // Close details modal if open
         const detailsModal = document.getElementById('pin-details-overlay');
