@@ -2,163 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AuthentiCITY">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Discover authentic places and share your experiences">
+    
     <title>AuthentiCITY - Social Feed</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iMjAiIGZpbGw9IiNmZjZiNmIiLz4KPHN2ZyB4PSI0NSIgeT0iNDUiIHdpZHRoPSI5MCIgaGVpZ2h0PSI5MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMlM2LjQ4IDIyIDEyIDIyUzIyIDE3LjUyIDIyIDEyUzE3LjUyIDIgMTIgMlpNMTEgMTlWMTNINVYxMUgxMVY1SDE0VjE5SDE0VjE5SDExWiIvPgo8L3N2Zz4KPC9zdmc+">
 </head>
 <body>
     <div class="app-container">
 
 
-        <!-- Category Tabs -->
-        <div class="category-tabs">
-            <div class="tabs-container" id="tabs-container">
-                <button class="tab-btn active" data-category="foryou">For You</button>
-                <button class="tab-btn" data-category="live">Live</button>
-                <button class="tab-btn" data-category="series">Series</button>
-                <button class="tab-btn" data-category="food">Food</button>
-                <button class="tab-btn" data-category="travel">Travel</button>
-                <button class="tab-btn" data-category="comedy">Comedy</button>
-                <button class="tab-btn" data-category="sports">Sports</button>
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <button class="menu-btn">
+                <span class="menu-icon">☰</span>
+            </button>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-category="foryou">For You</button>
+                <button class="nav-tab" data-category="nearby">Nearby</button>
             </div>
+            <button class="search-btn">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </button>
         </div>
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Home Feed -->
+            <!-- Home Page (Map) -->
             <div id="home-page" class="page active">
-                <div class="posts-feed" id="posts-feed">
-                    <!-- Sample posts -->
-                    <div class="post-item">
-                        <div class="post-media">
-                            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=500&fit=crop&crop=center" alt="Post content" class="post-image">
-                        </div>
-                        <div class="post-overlay">
-                            <div class="post-info">
-                                <div class="user-info">
-                                    <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face" alt="User" class="user-avatar">
-                                    <span class="username">Sarah Chen</span>
-                                </div>
-                                <p class="post-description">The most adventurous thing I've ever done</p>
-                            </div>
-                            <div class="post-actions">
-                                <button class="action-btn like-btn">
-                                    <span class="action-icon">❤️</span>
-                                    <span class="action-count">38.7K</span>
-                                </button>
-                                <button class="action-btn comment-btn">
-                                    <span class="action-icon">💬</span>
-                                    <span class="action-count">1.2K</span>
-                                </button>
-                                <button class="action-btn share-btn">
-                                    <span class="action-icon">📤</span>
-                                    <span class="action-count">Share</span>
-                                </button>
-                            </div>
+                <div class="map-container">
+                    <div id="google-map"></div>
+                    <div class="map-overlay">
+                        <div class="search-bar">
+                            <input type="text" id="map-search" placeholder="Search places...">
+                            <button id="search-btn">🔍</button>
                         </div>
                     </div>
-
-                    <div class="post-item">
-                        <div class="post-media">
-                            <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=300&h=500&fit=crop&crop=center" alt="Post content" class="post-image">
-                        </div>
-                        <div class="post-overlay">
-                            <div class="post-info">
-                                <div class="user-info">
-                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="User" class="user-avatar">
-                                    <span class="username">Alex Kim</span>
-                                </div>
-                                <p class="post-description">Sydney Marathon + City Tour Complete Guide</p>
-                            </div>
-                            <div class="post-actions">
-                                <button class="action-btn like-btn">
-                                    <span class="action-icon">❤️</span>
-                                    <span class="action-count">19</span>
-                                </button>
-                                <button class="action-btn comment-btn">
-                                    <span class="action-icon">💬</span>
-                                    <span class="action-count">5</span>
-                                </button>
-                                <button class="action-btn share-btn">
-                                    <span class="action-icon">📤</span>
-                                    <span class="action-count">Share</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="post-item">
-                        <div class="post-media">
-                            <img src="https://images.unsplash.com/photo-1520637836862-4d197d17c2a4?w=300&h=500&fit=crop&crop=center" alt="Post content" class="post-image">
-                        </div>
-                        <div class="post-overlay">
-                            <div class="post-info">
-                                <div class="user-info">
-                                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" alt="User" class="user-avatar">
-                                    <span class="username">Emma Wilson</span>
-                                </div>
-                                <p class="post-description">Exposing this person who bought all the collectibles...</p>
-                            </div>
-                            <div class="post-actions">
-                                <button class="action-btn like-btn">
-                                    <span class="action-icon">❤️</span>
-                                    <span class="action-count">29</span>
-                                </button>
-                                <button class="action-btn comment-btn">
-                                    <span class="action-icon">💬</span>
-                                    <span class="action-count">8</span>
-                                </button>
-                                <button class="action-btn share-btn">
-                                    <span class="action-icon">📤</span>
-                                    <span class="action-count">Share</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="post-item">
-                        <div class="post-media">
-                            <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=300&h=500&fit=crop&crop=center" alt="Post content" class="post-image">
-                        </div>
-                        <div class="post-overlay">
-                            <div class="post-info">
-                                <div class="user-info">
-                                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="User" class="user-avatar">
-                                    <span class="username">Travel Explorer</span>
-                                </div>
-                                <p class="post-description">Someone suddenly asked me: "Which country are you studying in?"</p>
-                            </div>
-                            <div class="post-actions">
-                                <button class="action-btn like-btn">
-                                    <span class="action-icon">❤️</span>
-                                    <span class="action-count">156</span>
-                                </button>
-                                <button class="action-btn comment-btn">
-                                    <span class="action-icon">💬</span>
-                                    <span class="action-count">43</span>
-                                </button>
-                                <button class="action-btn share-btn">
-                                    <span class="action-icon">📤</span>
-                                    <span class="action-count">Share</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Other pages placeholder -->
-            <div id="discover-page" class="page">
-                <div class="page-content">
-                    <h2>Discover</h2>
-                    <p>Trending content coming soon...</p>
-                </div>
-            </div>
-
-            <div id="messages-page" class="page">
-                <div class="page-content">
-                    <h2>Messages</h2>
-                    <p>Your messages will appear here...</p>
                 </div>
             </div>
 
@@ -180,16 +71,9 @@
                 <span class="nav-icon">🏠</span>
                 <span class="nav-label">Home</span>
             </button>
-            <button class="nav-btn" data-page="discover">
-                <span class="nav-icon">🔍</span>
-                <span class="nav-label">Discover</span>
-            </button>
             <button class="nav-btn compose-nav" id="compose-nav">
-                <span class="nav-icon plus-icon">+</span>
-            </button>
-            <button class="nav-btn" data-page="messages">
-                <span class="nav-icon">💬</span>
-                <span class="nav-label">Messages</span>
+                <span class="nav-icon compose-icon">+</span>
+                <span class="nav-label">Add</span>
             </button>
             <button class="nav-btn" data-page="profile">
                 <span class="nav-icon">👤</span>
@@ -220,6 +104,61 @@
         </div>
     </div>
 
+    <!-- Load configuration first -->
+    <script src="config.js"></script>
     <script src="script.js"></script>
+    
+    <!-- Google Maps API - dynamically loaded with config -->
+    <script>
+        // Load Google Maps API with the API key from config
+        function loadGoogleMapsAPI() {
+            if (window.CONFIG && window.CONFIG.GOOGLE_MAPS_API_KEY && window.CONFIG.GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+                const script = document.createElement('script');
+                script.async = true;
+                script.defer = true;
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${window.CONFIG.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+                script.onerror = function() {
+                    console.error('Failed to load Google Maps API. Please check your API key.');
+                    showToast('Failed to load maps. Please check configuration.');
+                };
+                document.head.appendChild(script);
+            } else {
+                console.warn('Google Maps API key not found. Please add your API key to config.js');
+                showToast('Google Maps API key not configured. Check config.js file.');
+            }
+        }
+        
+        // Load the API when the page is ready
+        document.addEventListener('DOMContentLoaded', loadGoogleMapsAPI);
+    </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        
+        // Install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install button or prompt
+            showInstallPromotion();
+        });
+        
+        function showInstallPromotion() {
+            // You can show a custom install button here
+            console.log('App can be installed');
+        }
+    </script>
 </body>
 </html>

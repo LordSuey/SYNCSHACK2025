@@ -2,11 +2,16 @@
 let currentPage = 'home';
 let currentCategory = 'foryou';
 let posts = [];
+let map;
+let placesService;
+let infoWindow;
+let isAddingPin = false;
+let userPins = [];
 
 // DOM elements
 const navButtons = document.querySelectorAll('.nav-btn');
 const pages = document.querySelectorAll('.page');
-const tabButtons = document.querySelectorAll('.tab-btn');
+const tabButtons = document.querySelectorAll('.nav-tab');
 const composeNavBtn = document.getElementById('compose-nav');
 const modalOverlay = document.getElementById('modal-overlay');
 const closeModalBtn = document.getElementById('close-modal');
@@ -30,24 +35,18 @@ document.addEventListener('DOMContentLoaded', function() {
 // Navigation functionality
 function initializeNavigation() {
     navButtons.forEach(button => {
-        if (!button.classList.contains('compose-nav')) {
-            button.addEventListener('click', function() {
-                const targetPage = this.getAttribute('data-page');
-                if (targetPage) {
-                    switchPage(targetPage);
-                }
-            });
-        }
+        button.addEventListener('click', function() {
+            const targetPage = this.getAttribute('data-page');
+            if (targetPage) {
+                switchPage(targetPage);
+            }
+        });
     });
 }
 
 function switchPage(pageId) {
     // Update active nav button
-    navButtons.forEach(btn => {
-        if (!btn.classList.contains('compose-nav')) {
-            btn.classList.remove('active');
-        }
-    });
+    navButtons.forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
     if (activeBtn) {
         activeBtn.classList.add('active');
@@ -60,7 +59,27 @@ function switchPage(pageId) {
         targetPage.classList.add('active');
     }
     
+    // Show/hide top navigation based on page
+    const topNav = document.querySelector('.top-nav');
+    const mainContent = document.querySelector('.main-content');
+    
+    if (pageId === 'home') {
+        topNav.style.display = 'flex';
+        mainContent.classList.remove('full-height');
+    } else {
+        topNav.style.display = 'none';
+        mainContent.classList.add('full-height');
+    }
+    
     currentPage = pageId;
+    
+    // Reset pin mode when leaving home page (map)
+    if (pageId !== 'home' && isAddingPin) {
+        isAddingPin = false;
+    }
+    
+    // Update compose button appearance
+    updateComposeButtonState();
 }
 
 // Tab functionality
@@ -100,8 +119,8 @@ function loadPostsByCategory(category) {
 
 // Compose functionality
 function initializeCompose() {
-    // Open compose modal
-    composeNavBtn.addEventListener('click', openComposeModal);
+    // Open compose modal or toggle pin mode based on current page
+    composeNavBtn.addEventListener('click', handleComposeClick);
     
     // Close modal events
     closeModalBtn.addEventListener('click', closeComposeModal);
@@ -131,6 +150,46 @@ function initializeCompose() {
             submitPost();
         }
     });
+}
+
+function handleComposeClick() {
+    if (currentPage === 'home') {
+        togglePinMode();
+    } else {
+        openComposeModal();
+    }
+}
+
+function togglePinMode() {
+    isAddingPin = !isAddingPin;
+    updateComposeButtonState();
+    
+    if (isAddingPin) {
+        showToast('Click on the map to add a pin');
+        // Change cursor style when adding pins
+        document.getElementById('google-map').style.cursor = 'crosshair';
+    } else {
+        showToast('Pin mode disabled');
+        document.getElementById('google-map').style.cursor = 'default';
+    }
+}
+
+function updateComposeButtonState() {
+    const composeIcon = composeNavBtn.querySelector('.compose-icon');
+    const navIcon = composeNavBtn.querySelector('.nav-icon');
+    
+    if (currentPage === 'home') {
+        if (isAddingPin) {
+            composeIcon.textContent = '✓';
+            navIcon.style.background = 'linear-gradient(135deg, #4CAF50, #66BB6A)';
+        } else {
+            composeIcon.textContent = '📍';
+            navIcon.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
+        }
+    } else {
+        composeIcon.textContent = '+';
+        navIcon.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
+    }
 }
 
 function openComposeModal() {
@@ -499,3 +558,295 @@ function refreshFeed() {
         showToast('Refresh complete');
     }, 1000);
 }
+
+// Google Maps functionality
+function initMap() {
+    // Use config for default location or fallback
+    const defaultLocation = window.CONFIG?.DEFAULT_MAP_CENTER || { lat: 40.7128, lng: -74.0060 };
+    const defaultZoom = window.CONFIG?.DEFAULT_MAP_ZOOM || 15;
+    
+    map = new google.maps.Map(document.getElementById('google-map'), {
+        zoom: defaultZoom,
+        center: defaultLocation,
+        styles: [
+            {
+                "elementType": "geometry",
+                "stylers": [{"color": "#212121"}]
+            },
+            {
+                "elementType": "labels.icon",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#757575"}]
+            },
+            {
+                "elementType": "labels.text.stroke",
+                "stylers": [{"color": "#212121"}]
+            },
+            {
+                "featureType": "administrative",
+                "elementType": "geometry",
+                "stylers": [{"color": "#757575"}]
+            },
+            {
+                "featureType": "administrative.country",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#9e9e9e"}]
+            },
+            {
+                "featureType": "road",
+                "elementType": "geometry.fill",
+                "stylers": [{"color": "#2c2c2c"}]
+            },
+            {
+                "featureType": "road",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#8a8a8a"}]
+            },
+            {
+                "featureType": "water",
+                "elementType": "geometry",
+                "stylers": [{"color": "#000000"}]
+            },
+            {
+                "featureType": "water",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#3d3d3d"}]
+            }
+        ],
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+    });
+
+    placesService = new google.maps.places.PlacesService(map);
+    infoWindow = new google.maps.InfoWindow();
+
+    // Try to get user location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                map.setCenter(pos);
+                
+                // Add marker for current location
+                new google.maps.Marker({
+                    position: pos,
+                    map: map,
+                    title: 'Your Location',
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: '#ff6b6b',
+                        fillOpacity: 1,
+                        strokeColor: '#fff',
+                        strokeWeight: 2
+                    }
+                });
+                
+                // Search for nearby places
+                searchNearbyPlaces(pos);
+            },
+            () => {
+                console.log('Location access denied');
+                searchNearbyPlaces(defaultLocation);
+            }
+        );
+    } else {
+        console.log('Geolocation not supported');
+        searchNearbyPlaces(defaultLocation);
+    }
+
+    // Setup search functionality
+    setupMapSearch();
+    
+    // Setup map click for adding pins
+    setupMapClickHandler();
+}
+
+function searchNearbyPlaces(location) {
+    const request = {
+        location: location,
+        radius: 1000,
+        type: ['restaurant', 'tourist_attraction', 'store']
+    };
+
+    placesService.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            results.slice(0, 10).forEach(place => {
+                createMarker(place);
+            });
+        }
+    });
+}
+
+function createMarker(place) {
+    const marker = new google.maps.Marker({
+        position: place.geometry.location,
+        map: map,
+        title: place.name,
+        icon: {
+            url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPg==',
+            scaledSize: new google.maps.Size(30, 30)
+        }
+    });
+
+    marker.addListener('click', () => {
+        const content = `
+            <div style="color: #333; max-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; color: #000;">${place.name}</h3>
+                <p style="margin: 0 0 8px 0; font-size: 14px;">${place.vicinity}</p>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="color: #ff6b6b;">⭐</span>
+                    <span style="font-size: 14px;">${place.rating || 'No rating'}</span>
+                </div>
+            </div>
+        `;
+        infoWindow.setContent(content);
+        infoWindow.open(map, marker);
+    });
+}
+
+function setupMapSearch() {
+    const searchInput = document.getElementById('map-search');
+    const searchBtn = document.getElementById('search-btn');
+    
+    if (!searchInput || !searchBtn) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(searchInput);
+    autocomplete.bindTo('bounds', map);
+
+    autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) return;
+
+        if (place.geometry.viewport) {
+            map.fitBounds(place.geometry.viewport);
+        } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(15);
+        }
+
+        createMarker(place);
+    });
+
+    searchBtn.addEventListener('click', () => {
+        const query = searchInput.value;
+        if (!query) return;
+
+        const request = {
+            query: query,
+            fields: ['name', 'geometry', 'rating', 'formatted_address']
+        };
+
+        placesService.findPlaceFromQuery(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                const place = results[0];
+                map.setCenter(place.geometry.location);
+                map.setZoom(15);
+                createMarker(place);
+            }
+        });
+    });
+}
+
+function setupMapClickHandler() {
+    map.addListener('click', (event) => {
+        if (isAddingPin) {
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+            promptForPinDetails(lat, lng);
+        }
+    });
+}
+
+function promptForPinDetails(lat, lng) {
+    const title = prompt('Enter a title for this location:');
+    if (title && title.trim()) {
+        const description = prompt('Enter a description (optional):') || '';
+        createUserPin(lat, lng, title.trim(), description.trim());
+        
+        // Turn off pin mode after adding a pin
+        isAddingPin = false;
+        updateComposeButtonState();
+        document.getElementById('google-map').style.cursor = 'default';
+        
+        showToast('Pin added successfully!');
+    } else {
+        showToast('Pin creation cancelled');
+    }
+}
+
+function createUserPin(lat, lng, title, description) {
+    const pinData = {
+        id: Date.now(),
+        lat: lat,
+        lng: lng,
+        title: title,
+        description: description,
+        timestamp: new Date()
+    };
+    
+    userPins.push(pinData);
+    
+    // Create marker on map
+    const marker = new google.maps.Marker({
+        position: { lat: lat, lng: lng },
+        map: map,
+        title: title,
+        icon: {
+            url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjNGZhZjUwIi8+Cjwvc3ZnPg==',
+            scaledSize: new google.maps.Size(30, 30)
+        }
+    });
+
+    marker.addListener('click', () => {
+        const content = `
+            <div style="color: #333; max-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; color: #000;">${title}</h3>
+                ${description ? `<p style="margin: 0 0 8px 0; font-size: 14px;">${description}</p>` : ''}
+                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #666;">
+                    <span>📍</span>
+                    <span>Your Pin</span>
+                </div>
+                <button onclick="deleteUserPin(${pinData.id})" style="margin-top: 8px; background: #ff6b6b; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete Pin</button>
+            </div>
+        `;
+        infoWindow.setContent(content);
+        infoWindow.open(map, marker);
+    });
+    
+    // Store marker reference for deletion
+    pinData.marker = marker;
+}
+
+function deleteUserPin(pinId) {
+    const pinIndex = userPins.findIndex(pin => pin.id === pinId);
+    if (pinIndex !== -1) {
+        const pin = userPins[pinIndex];
+        
+        // Remove marker from map
+        if (pin.marker) {
+            pin.marker.setMap(null);
+        }
+        
+        // Remove from array
+        userPins.splice(pinIndex, 1);
+        
+        // Close info window
+        infoWindow.close();
+        
+        showToast('Pin deleted');
+    }
+}
+
+// Make functions globally available
+window.deleteUserPin = deleteUserPin;
+
+// Make initMap globally available for Google Maps callback
+window.initMap = initMap;
