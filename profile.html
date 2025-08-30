@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AuthentiCITY">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Discover authentic places and share your experiences">
+    
+    <title>Profile - AuthentiCITY</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iMjAiIGZpbGw9IiNmZjZiNmIiLz4KPHN2ZyB4PSI0NSIgeT0iNDUiIHdpZHRoPSI5MCIgaGVpZ2h0PSI5MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMlM2LjQ4IDIyIDEyIDIyUzIyIDE3LjUyIDIyIDEyUzE3LjUyIDIgMTIgMlpNMTEgMTlWMTNINVYxMUgxMVY1SDE0VjE5SDE0VjE5SDExWiIvPgo8L3N2Zz4KPC9zdmc+">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Profile Header -->
+        <header class="profile-header">
+            <button class="back-btn" onclick="goBack()">
+                <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15,18 9,12 15,6"></polyline>
+                </svg>
+            </button>
+            <h1>Profile</h1>
+            <button class="settings-btn">
+                <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="m12 1 0 6m0 6 0 6"></path>
+                    <path d="m1 12 6 0m6 0 6 0"></path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Main Content -->
+        <main class="profile-main">
+            <!-- Profile Info -->
+            <section class="profile-section">
+                <div class="profile-avatar-large">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&h=120&fit=crop&crop=face" alt="Profile Picture" class="avatar-img">
+                </div>
+                <h2 class="profile-name">Eric Su</h2>
+                <p class="profile-username">@LordSuey</p>
+                <p class="profile-bio">St John's Mazda driver</p>
+                <div class="location-tag" onclick="goToLocation()">
+                    <span class="location-icon">📍</span>
+                    <span class="location-text">Sydney, NSW, Australia</span>
+                    <span class="location-arrow">→</span>
+                </div>
+                
+
+
+                <button class="edit-profile-btn">Edit Profile</button>
+            </section>
+
+            <!-- Tabs -->
+            <section class="profile-tabs">
+                <button class="profile-tab active" data-tab="achievements">Achievements</button>
+                <button class="profile-tab" data-tab="saved">Saved</button>
+                <button class="profile-tab" data-tab="seen">Seen</button>
+            </section>
+
+            <!-- Content Sections -->
+            <section class="tab-content">
+                                 <div id="achievements-content" class="tab-panel active">
+                     <div class="achievements-grid">
+                         <div class="achievement-item" data-location="33.875,151.2057" data-location-name="Sydney Opera House" data-zoom="16">
+                             <div class="achievement-icon">✈️</div>
+                             <div class="achievement-info">
+                                 <h4>First Landing</h4>
+                                 <p>AuthentiCITY: Complete your first check-in.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">89.2% of users have this</span>
+                                     <span class="achievement-date">Unlocked Dec 15, 2024, 2:30 PM</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status completed">✓</div>
+                         </div>
+                         <div class="achievement-item" data-location="-33.8688,151.2093" data-location-name="Bondi Beach" data-zoom="15">
+                             <div class="achievement-icon">📚</div>
+                             <div class="achievement-info">
+                                 <h4>City Explorer</h4>
+                                 <p>Visited 10 different cities in your region.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">34.7% of users have this</span>
+                                     <span class="achievement-date">Unlocked Dec 10, 2024, 11:45 AM</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status completed">✓</div>
+                         </div>
+                         <div class="achievement-item" data-location="-33.8568,151.2153" data-location-name="The Rocks" data-zoom="16">
+                             <div class="achievement-icon">🏛️</div>
+                             <div class="achievement-info">
+                                 <h4>Cultural Pioneer</h4>
+                                 <p>You discovered a hidden historical landmark.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">28.1% of users have this</span>
+                                     <span class="achievement-date">Unlocked Dec 8, 2024, 4:20 PM</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status completed">✓</div>
+                         </div>
+                         <div class="achievement-item" data-location="-33.8688,151.2093" data-location-name="Darling Harbour" data-zoom="15">
+                             <div class="achievement-icon">🗺️</div>
+                             <div class="achievement-info">
+                                 <h4>Map Architect</h4>
+                                 <p>Created 25 custom location pins.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">Progress: 8/25</span>
+                                     <span class="achievement-date">Last pin: Dec 12, 2024</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status">8/25</div>
+                         </div>
+                         <div class="achievement-item" data-location="-33.9249,151.2596" data-location-name="Manly Beach" data-zoom="14">
+                             <div class="achievement-icon">🌏</div>
+                             <div class="achievement-info">
+                                 <h4>Global Citizen</h4>
+                                 <p>Visited places in 5 different countries.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">Progress: 2/5</span>
+                                     <span class="achievement-date">Last country: Australia</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status">2/5</div>
+                         </div>
+                         <div class="achievement-item" data-location="-33.8688,151.2093" data-location-name="Circular Quay" data-zoom="16">
+                             <div class="achievement-icon">💬</div>
+                             <div class="achievement-info">
+                                 <h4>Storyteller</h4>
+                                 <p>Shared 50 authentic experiences.</p>
+                                 <div class="achievement-meta">
+                                     <span class="achievement-percentage">Progress: 23/50</span>
+                                     <span class="achievement-date">Last story: Dec 14, 2024</span>
+                                 </div>
+                             </div>
+                             <div class="achievement-status">23/50</div>
+                         </div>
+                     </div>
+                 </div>
+
+                <div id="saved-content" class="tab-panel">
+                    <div class="saved-grid">
+                        <div class="saved-item">
+                            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop" alt="Saved Place" class="saved-image">
+                            <div class="saved-info">
+                                <h4>Central Park</h4>
+                                <p>📍 New York, NY</p>
+                                <span class="saved-date">Saved 2 days ago</span>
+                            </div>
+                        </div>
+                        <div class="saved-item">
+                            <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=200&h=200&fit=crop" alt="Saved Place" class="saved-image">
+                            <div class="saved-info">
+                                <h4>Golden Gate Bridge</h4>
+                                <p>📍 San Francisco, CA</p>
+                                <span class="saved-date">Saved 1 week ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="seen-content" class="tab-panel">
+                    <div class="seen-grid">
+                        <div class="seen-item">
+                            <img src="https://images.unsplash.com/photo-1520637836862-4d197d17c2a4?w=200&h=200&fit=crop" alt="Seen Place" class="seen-image">
+                            <div class="seen-info">
+                                <h4>Times Square</h4>
+                                <p>📍 New York, NY</p>
+                                <span class="seen-date">Visited 3 days ago</span>
+                            </div>
+                        </div>
+                        <div class="seen-item">
+                            <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=200&h=200&fit=crop" alt="Seen Place" class="seen-image">
+                            <div class="seen-info">
+                                <h4>Venice Beach</h4>
+                                <p>📍 Los Angeles, CA</p>
+                                <span class="seen-date">Visited 2 weeks ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-btn">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Home</span>
+            </a>
+            <button class="nav-btn compose-nav" onclick="openAddModal()">
+                <span class="nav-icon compose-icon">+</span>
+                <span class="nav-label">Add</span>
+            </button>
+            <a href="profile.html" class="nav-btn active">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profile</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Add Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="compose-modal">
+            <div class="modal-header">
+                <h3>Create Post</h3>
+                <button class="close-btn" onclick="closeAddModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="post-title" placeholder="Share your amazing moment..." maxlength="50">
+                <input type="file" id="post-image" accept="image/*" style="display: none;">
+                <button class="image-upload-btn" onclick="document.getElementById('post-image').click()">
+                    📷 Add Photo
+                </button>
+                <div class="image-preview" id="image-preview"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" onclick="closeAddModal()">Cancel</button>
+                <button class="post-btn" disabled>Post</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="profile.js"></script>
+</body>
+</html>
