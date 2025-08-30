@@ -14,7 +14,6 @@
         <div class="category-tabs">
             <div class="tabs-container" id="tabs-container">
                 <button class="tab-btn active" data-category="foryou">For You</button>
-                <button class="tab-btn" data-category="live">Live</button>
                 <button class="tab-btn" data-category="series">Series</button>
                 <button class="tab-btn" data-category="food">Food</button>
                 <button class="tab-btn" data-category="travel">Travel</button>
@@ -148,17 +147,12 @@
             </div>
 
             <!-- Other pages placeholder -->
-            <div id="discover-page" class="page">
+            <div id="map-page" class="page">
                 <div class="page-content">
-                    <h2>Discover</h2>
-                    <p>Trending content coming soon...</p>
-                </div>
-            </div>
-
-            <div id="messages-page" class="page">
-                <div class="page-content">
-                    <h2>Messages</h2>
-                    <p>Your messages will appear here...</p>
+                    <h2>Map</h2>
+                    <div class="map-placeholder">
+                        <p>🗺️ Map view coming soon</p>
+                    </div>
                 </div>
             </div>
 
@@ -174,22 +168,20 @@
             </div>
         </main>
 
+        <!-- Floating Compose Button -->
+        <button class="floating-compose-btn" id="compose-nav">
+            <span class="compose-icon">+</span>
+        </button>
+
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
             <button class="nav-btn active" data-page="home">
                 <span class="nav-icon">🏠</span>
                 <span class="nav-label">Home</span>
             </button>
-            <button class="nav-btn" data-page="discover">
-                <span class="nav-icon">🔍</span>
-                <span class="nav-label">Discover</span>
-            </button>
-            <button class="nav-btn compose-nav" id="compose-nav">
-                <span class="nav-icon plus-icon">+</span>
-            </button>
-            <button class="nav-btn" data-page="messages">
-                <span class="nav-icon">💬</span>
-                <span class="nav-label">Messages</span>
+            <button class="nav-btn" data-page="map">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">Map</span>
             </button>
             <button class="nav-btn" data-page="profile">
                 <span class="nav-icon">👤</span>

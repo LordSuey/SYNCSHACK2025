@@ -30,24 +30,18 @@ document.addEventListener('DOMContentLoaded', function() {
 // Navigation functionality
 function initializeNavigation() {
     navButtons.forEach(button => {
-        if (!button.classList.contains('compose-nav')) {
-            button.addEventListener('click', function() {
-                const targetPage = this.getAttribute('data-page');
-                if (targetPage) {
-                    switchPage(targetPage);
-                }
-            });
-        }
+        button.addEventListener('click', function() {
+            const targetPage = this.getAttribute('data-page');
+            if (targetPage) {
+                switchPage(targetPage);
+            }
+        });
     });
 }
 
 function switchPage(pageId) {
     // Update active nav button
-    navButtons.forEach(btn => {
-        if (!btn.classList.contains('compose-nav')) {
-            btn.classList.remove('active');
-        }
-    });
+    navButtons.forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
     if (activeBtn) {
         activeBtn.classList.add('active');
