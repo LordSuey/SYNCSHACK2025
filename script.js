@@ -5,11 +5,13 @@ let posts = [];
 let map;
 let placesService;
 let infoWindow;
+let isAddingPin = false;
+let userPins = [];
 
 // DOM elements
 const navButtons = document.querySelectorAll('.nav-btn');
 const pages = document.querySelectorAll('.page');
-const tabButtons = document.querySelectorAll('.tab-btn');
+const tabButtons = document.querySelectorAll('.nav-tab');
 const composeNavBtn = document.getElementById('compose-nav');
 const modalOverlay = document.getElementById('modal-overlay');
 const closeModalBtn = document.getElementById('close-modal');
@@ -57,19 +59,27 @@ function switchPage(pageId) {
         targetPage.classList.add('active');
     }
     
-    // Show/hide category tabs based on page
-    const categoryTabs = document.querySelector('.category-tabs');
+    // Show/hide top navigation based on page
+    const topNav = document.querySelector('.top-nav');
     const mainContent = document.querySelector('.main-content');
     
     if (pageId === 'home') {
-        categoryTabs.style.display = 'block';
+        topNav.style.display = 'flex';
         mainContent.classList.remove('full-height');
     } else {
-        categoryTabs.style.display = 'none';
+        topNav.style.display = 'none';
         mainContent.classList.add('full-height');
     }
     
     currentPage = pageId;
+    
+    // Reset pin mode when leaving map page
+    if (pageId !== 'map' && isAddingPin) {
+        isAddingPin = false;
+    }
+    
+    // Update compose button appearance
+    updateComposeButtonState();
 }
 
 // Tab functionality
@@ -109,8 +119,8 @@ function loadPostsByCategory(category) {
 
 // Compose functionality
 function initializeCompose() {
-    // Open compose modal
-    composeNavBtn.addEventListener('click', openComposeModal);
+    // Open compose modal or toggle pin mode based on current page
+    composeNavBtn.addEventListener('click', handleComposeClick);
     
     // Close modal events
     closeModalBtn.addEventListener('click', closeComposeModal);
@@ -140,6 +150,44 @@ function initializeCompose() {
             submitPost();
         }
     });
+}
+
+function handleComposeClick() {
+    if (currentPage === 'map') {
+        togglePinMode();
+    } else {
+        openComposeModal();
+    }
+}
+
+function togglePinMode() {
+    isAddingPin = !isAddingPin;
+    updateComposeButtonState();
+    
+    if (isAddingPin) {
+        showToast('Click on the map to add a pin');
+        // Change cursor style when adding pins
+        document.getElementById('google-map').style.cursor = 'crosshair';
+    } else {
+        showToast('Pin mode disabled');
+        document.getElementById('google-map').style.cursor = 'default';
+    }
+}
+
+function updateComposeButtonState() {
+    const composeIcon = composeNavBtn.querySelector('.compose-icon');
+    if (currentPage === 'map') {
+        if (isAddingPin) {
+            composeIcon.textContent = '✓';
+            composeNavBtn.style.background = 'linear-gradient(135deg, #4CAF50, #66BB6A)';
+        } else {
+            composeIcon.textContent = '📍';
+            composeNavBtn.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
+        }
+    } else {
+        composeIcon.textContent = '+';
+        composeNavBtn.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e8e)';
+    }
 }
 
 function openComposeModal() {
@@ -614,6 +662,9 @@ function initMap() {
 
     // Setup search functionality
     setupMapSearch();
+    
+    // Setup map click for adding pins
+    setupMapClickHandler();
 }
 
 function searchNearbyPlaces(location) {
@@ -701,6 +752,99 @@ function setupMapSearch() {
         });
     });
 }
+
+function setupMapClickHandler() {
+    map.addListener('click', (event) => {
+        if (isAddingPin) {
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+            promptForPinDetails(lat, lng);
+        }
+    });
+}
+
+function promptForPinDetails(lat, lng) {
+    const title = prompt('Enter a title for this location:');
+    if (title && title.trim()) {
+        const description = prompt('Enter a description (optional):') || '';
+        createUserPin(lat, lng, title.trim(), description.trim());
+        
+        // Turn off pin mode after adding a pin
+        isAddingPin = false;
+        updateComposeButtonState();
+        document.getElementById('google-map').style.cursor = 'default';
+        
+        showToast('Pin added successfully!');
+    } else {
+        showToast('Pin creation cancelled');
+    }
+}
+
+function createUserPin(lat, lng, title, description) {
+    const pinData = {
+        id: Date.now(),
+        lat: lat,
+        lng: lng,
+        title: title,
+        description: description,
+        timestamp: new Date()
+    };
+    
+    userPins.push(pinData);
+    
+    // Create marker on map
+    const marker = new google.maps.Marker({
+        position: { lat: lat, lng: lng },
+        map: map,
+        title: title,
+        icon: {
+            url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjNGZhZjUwIi8+Cjwvc3ZnPg==',
+            scaledSize: new google.maps.Size(30, 30)
+        }
+    });
+
+    marker.addListener('click', () => {
+        const content = `
+            <div style="color: #333; max-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; color: #000;">${title}</h3>
+                ${description ? `<p style="margin: 0 0 8px 0; font-size: 14px;">${description}</p>` : ''}
+                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #666;">
+                    <span>📍</span>
+                    <span>Your Pin</span>
+                </div>
+                <button onclick="deleteUserPin(${pinData.id})" style="margin-top: 8px; background: #ff6b6b; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete Pin</button>
+            </div>
+        `;
+        infoWindow.setContent(content);
+        infoWindow.open(map, marker);
+    });
+    
+    // Store marker reference for deletion
+    pinData.marker = marker;
+}
+
+function deleteUserPin(pinId) {
+    const pinIndex = userPins.findIndex(pin => pin.id === pinId);
+    if (pinIndex !== -1) {
+        const pin = userPins[pinIndex];
+        
+        // Remove marker from map
+        if (pin.marker) {
+            pin.marker.setMap(null);
+        }
+        
+        // Remove from array
+        userPins.splice(pinIndex, 1);
+        
+        // Close info window
+        infoWindow.close();
+        
+        showToast('Pin deleted');
+    }
+}
+
+// Make functions globally available
+window.deleteUserPin = deleteUserPin;
 
 // Make initMap globally available for Google Maps callback
 window.initMap = initMap;

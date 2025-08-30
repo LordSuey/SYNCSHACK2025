@@ -24,66 +24,113 @@ body {
 
 
 
-/* Category Tabs */
-.category-tabs {
+/* Top Navigation */
+.top-nav {
     background-color: #000;
-    padding: 20px 20px 10px;
-    border-bottom: 1px solid #333;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     position: sticky;
     top: 0;
     z-index: 999;
-}
-
-.tabs-container {
-    display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.tabs-container::-webkit-scrollbar {
-    display: none;
-}
-
-.tab-btn {
-    background: none;
-    border: none;
-    color: #888;
-    font-size: 16px;
-    font-weight: 500;
-    padding: 10px 0;
-    cursor: pointer;
-    transition: color 0.3s ease;
-    white-space: nowrap;
+    border-bottom: 1px solid #333;
     position: relative;
 }
 
-.tab-btn.active {
+.menu-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-icon {
+    font-size: 18px;
+    font-weight: normal;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 32px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.nav-tab {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 8px 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-tab.active {
     color: #fff;
     font-weight: 600;
 }
 
-.tab-btn.active::after {
+.nav-tab.active::after {
     content: '';
     position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
+    bottom: -16px;
+    left: 0;
+    right: 0;
     height: 3px;
-    background-color: #fff;
+    background-color: #ff4757;
     border-radius: 2px;
+}
+
+.search-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
 }
 
 /* Main content */
 .main-content {
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
-    min-height: calc(100vh - 70px);
+    min-height: calc(100vh - 80px);
     transition: min-height 0.3s ease;
 }
 
-/* When category tabs are hidden */
+/* When top nav is hidden */
 .main-content.full-height {
     min-height: calc(100vh - 80px);
 }
@@ -253,7 +300,7 @@ body {
 .map-container {
     position: relative;
     width: 100%;
-    height: calc(100vh - 70px - 80px - env(safe-area-inset-bottom));
+    height: calc(100vh - 80px - 80px - env(safe-area-inset-bottom));
     overflow: hidden;
 }
 
@@ -262,10 +309,10 @@ body {
 }
 
 #map-page.page .map-container {
-    height: calc(100vh - 70px - 80px - env(safe-area-inset-bottom));
+    height: calc(100vh - 80px - 80px - env(safe-area-inset-bottom));
 }
 
-/* When category tabs are hidden (map page) */
+/* When top nav is hidden (map page) */
 .main-content.full-height .map-container {
     height: calc(100vh - 80px - env(safe-area-inset-bottom));
 }
@@ -595,13 +642,33 @@ body {
         font-size: 13px;
     }
     
-    .category-tabs {
-        padding: 0 15px 8px;
+    .top-nav {
+        padding: 12px 15px;
     }
     
-    .tab-btn {
-        font-size: 15px;
-        padding: 8px 0;
+    .nav-tab {
+        font-size: 16px;
+        padding: 6px 0;
+    }
+    
+    .nav-tabs {
+        gap: 24px;
+    }
+    
+    .menu-btn,
+    .search-btn {
+        width: 36px;
+        height: 36px;
+        padding: 6px;
+    }
+    
+    .menu-icon {
+        font-size: 16px;
+    }
+    
+    .search-icon {
+        width: 18px;
+        height: 18px;
     }
     
     .post-overlay {
