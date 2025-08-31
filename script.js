@@ -1002,6 +1002,12 @@ function initMap() {
     hardCodedBounds.extend({ lat: -33.88036830097366, lng: 151.20427651239518 }); // Haymarket cat
     hardCodedBounds.extend({ lat: -33.89159793495311, lng: 151.1952780812729 }); // Redfern cat
     hardCodedBounds.extend({ lat: -33.863530954674445, lng: 151.01858344807906 }); // Auburn Cherry Blossom
+    hardCodedBounds.extend({ lat: -33.8440668399821, lng: 151.20945557666627 }); // Wendy's Secret Garden
+    hardCodedBounds.extend({ lat: -33.89518624519536, lng: 151.23379811349943 }); // Centennial park owl
+    hardCodedBounds.extend({ lat: -33.85712326727015, lng: 151.2144756472601 }); // Benny the Seal
+    hardCodedBounds.extend({ lat: -33.917355671981475, lng: 151.22964983661436 }); // Museum of Human Disease
+    hardCodedBounds.extend({ lat: -33.88543818146638, lng: 151.22673978951298 }); // Paddington Reservoir Gardens
+    hardCodedBounds.extend({ lat: -33.86622922860472, lng: 151.21226606425876 }); // Trim The Cat
     map.fitBounds(hardCodedBounds);
     map.setZoom(Math.max(map.getZoom(), 11)); // Ensure minimum zoom level
     
@@ -1102,8 +1108,9 @@ let pendingPinLocation = null;
 async function savePinsToStorage() {
     try {
         // Filter out hard-coded pins and remove marker references before saving
+        const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650];
         const pinsToSave = userPins
-            .filter(pin => pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) // Exclude hard-coded pins
+            .filter(pin => !hardCodedPinIds.includes(pin.id)) // Exclude hard-coded pins
             .map(pin => {
                 const { marker, ...pinData } = pin;
                 return pinData;
@@ -1158,6 +1165,60 @@ function loadPinsFromStorage() {
                 description: "",
                 category: "landmark",
                 timestamp: new Date("2025-08-30T17:57:39.444Z")
+            },
+            {
+                id: 1756600128291,
+                lat: -33.8440668399821,
+                lng: 151.20945557666627,
+                title: "Picnic at Wendy's Secret Garden",
+                description: "",
+                category: "event",
+                timestamp: new Date("2025-08-31T00:28:48.291Z")
+            },
+            {
+                id: 1756600174470,
+                lat: -33.89518624519536,
+                lng: 151.23379811349943,
+                title: "Centennial park powerful owl search",
+                description: "",
+                category: "event",
+                timestamp: new Date("2025-08-31T00:29:34.470Z")
+            },
+            {
+                id: 1756600303084,
+                lat: -33.85712326727015,
+                lng: 151.2144756472601,
+                title: "Benny the Seal Resting Point",
+                description: "",
+                category: "meme",
+                timestamp: new Date("2025-08-31T00:31:43.084Z")
+            },
+            {
+                id: 1756600372337,
+                lat: -33.917355671981475,
+                lng: 151.22964983661436,
+                title: "REAL brain rot – Museum of Human Disease",
+                description: "",
+                category: "landmark",
+                timestamp: new Date("2025-08-31T00:32:52.337Z")
+            },
+            {
+                id: 1756600431649,
+                lat: -33.88543818146638,
+                lng: 151.22673978951298,
+                title: "Paddington Reservoir Gardens",
+                description: "",
+                category: "nature",
+                timestamp: new Date("2025-08-31T00:33:51.649Z")
+            },
+            {
+                id: 1756600459650,
+                lat: -33.86622922860472,
+                lng: 151.21226606425876,
+                title: "Trim The Cat",
+                description: "",
+                category: "landmark",
+                timestamp: new Date("2025-08-31T00:34:19.650Z")
             }
         ];
         
@@ -1212,8 +1273,9 @@ function loadPinsFromStorage() {
 
 function downloadPinsFile() {
     try {
+        const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650];
         const pinsToSave = userPins
-            .filter(pin => pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) // Exclude hard-coded pins
+            .filter(pin => !hardCodedPinIds.includes(pin.id)) // Exclude hard-coded pins
             .map(pin => {
                 const { marker, ...pinData } = pin;
                 return pinData;
@@ -1240,14 +1302,15 @@ function downloadPinsFile() {
 
 function clearAllPins() {
     // Remove only user-created markers from map, keep hard-coded pins
+    const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650];
     userPins.forEach(pin => {
-        if (pin.marker && pin.id !== 1756574202596 && pin.id !== 1756576515738 && pin.id !== 1756576659444) {
+        if (pin.marker && !hardCodedPinIds.includes(pin.id)) {
             pin.marker.setMap(null);
         }
     });
     
     // Keep hard-coded pins, remove only user-created ones
-    userPins = userPins.filter(pin => pin.id === 1756574202596 || pin.id === 1756576515738 || pin.id === 1756576659444);
+    userPins = userPins.filter(pin => hardCodedPinIds.includes(pin.id));
     localStorage.removeItem('userPins');
     
     // Also clear the file by downloading an empty one
@@ -1477,6 +1540,36 @@ function showPinDetails(pinData) {
         // Use Cherry Blossom image for the specific hard-coded pin
         console.log('Using Cherry Blossom image');
         photo.src = 'photo/cherry blossom.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756600128291) {
+        // Use Wendy's Secret Garden image
+        console.log('Using Wendy Secret Garden image');
+        photo.src = 'photo/wendy_secret_garden.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756600174470) {
+        // Use Centennial Park Owl image
+        console.log('Using Centennial Park Owl image');
+        photo.src = 'photo/centennial_park_owl.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756600303084) {
+        // Use Benny the Seal image
+        console.log('Using Benny the Seal image');
+        photo.src = 'photo/benny_the_seal.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756600372337) {
+        // Use Museum of Human Disease image
+        console.log('Using Museum of Human Disease image');
+        photo.src = 'photo/museum_of_human_disease.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756600431649) {
+        // Use Paddington Reservoir Gardens image
+        console.log('Using Paddington Reservoir Gardens image');
+        photo.src = 'photo/Paddington_Reservoir_Gardens.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756600459650) {
+        // Use Trim The Cat image
+        console.log('Using Trim The Cat image');
+        photo.src = 'photo/trim_the_cat.png';
         photo.style.display = 'block';
     } else {
         console.log('Using category icon for category:', pinData.category);
