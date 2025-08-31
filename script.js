@@ -7,6 +7,9 @@ let placesService;
 let infoWindow;
 let isAddingPin = false;
 let userPins = [];
+let pinModalMode = 'create';  
+let editingPinId = null;
+
 
 // Check if we should enable pin mode (from profile page navigation)
 document.addEventListener('DOMContentLoaded', function() {
@@ -159,121 +162,174 @@ function initializeCompose() {
     initializePinModal();
 }
 
+function getPinById(id) {
+  return userPins.find(p => p.id === id);
+}
+
 function initializePinModal() {
-    console.log('Initializing pin modal...');
-    const pinModal = document.getElementById('pin-modal-overlay');
-    const closePinModal = document.getElementById('close-pin-modal');
-    const cancelPinBtn = document.getElementById('cancel-pin-btn');
-    const createPinBtn = document.getElementById('create-pin-btn');
-    const pinTitle = document.getElementById('pin-title');
-    const pinDescription = document.getElementById('pin-description');
-    const pinPhotoInput = document.getElementById('pin-photo');
-    const pinPhotoBtn = document.getElementById('pin-photo-btn');
-    const pinImagePreview = document.getElementById('pin-image-preview');
-    
-    console.log('Pin modal elements found:', {
-        pinModal: !!pinModal,
-        createPinBtn: !!createPinBtn,
-        pinTitle: !!pinTitle,
-        pinDescription: !!pinDescription
-    });
-    
-    // Close modal events
-    function closePinModalHandler() {
-        pinModal.classList.remove('active');
-        pendingPinLocation = null;
+  console.log('Initializing pin modal...');
+  const pinModal = document.getElementById('pin-modal-overlay');
+  const closePinModal = document.getElementById('close-pin-modal');
+  const cancelPinBtn = document.getElementById('cancel-pin-btn');
+  const createPinBtn = document.getElementById('create-pin-btn'); // becomes "Save Changes" in edit mode
+  const pinTitle = document.getElementById('pin-title');
+  const pinDescription = document.getElementById('pin-description');
+  const pinPhotoInput = document.getElementById('pin-photo');
+  const pinPhotoBtn = document.getElementById('pin-photo-btn');
+  const pinImagePreview = document.getElementById('pin-image-preview');
+
+  console.log('Pin modal elements found:', {
+    pinModal: !!pinModal,
+    createPinBtn: !!createPinBtn,
+    pinTitle: !!pinTitle,
+    pinDescription: !!pinDescription
+  });
+
+  // --- close/reset handler (now also resets modal to CREATE defaults) ---
+  function closePinModalHandler() {
+    pinModal.classList.remove('active');
+    pendingPinLocation = null;
+
+    // reset to CREATE mode
+    pinModalMode = 'create';
+    editingPinId = null;
+    pinModal.querySelector('.modal-header h3').textContent = 'Add Pin';
+    createPinBtn.textContent = 'Create Pin';
+
+    // remove the red delete button if it was added in edit mode
+    const deleteInEditBtn = document.getElementById('delete-pin-in-edit-btn');
+    if (deleteInEditBtn) deleteInEditBtn.remove();
+
+    // clear fields
+    pinTitle.value = '';
+    pinDescription.value = '';
+    const defaultRadio = document.querySelector('input[name="category"][value="landmark"]');
+    if (defaultRadio) defaultRadio.checked = true;
+    pinImagePreview.innerHTML = '';
+    pinPhotoInput.value = '';
+  }
+
+  // expose so edit flow can call it
+  window.closePinModalHandler = closePinModalHandler;
+
+  // wire close events
+  closePinModal.addEventListener('click', closePinModalHandler);
+  cancelPinBtn.addEventListener('click', closePinModalHandler);
+  pinModal.addEventListener('click', function(e) {
+    if (e.target === pinModal) closePinModalHandler();
+  });
+
+  // --- photo upload ---
+  pinPhotoBtn.addEventListener('click', () => pinPhotoInput.click());
+  pinPhotoInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        pinImagePreview.innerHTML = `<img src="${ev.target.result}" alt="Pin photo">`;
+      };
+      reader.readAsDataURL(file);
     }
-    
-    closePinModal.addEventListener('click', closePinModalHandler);
-    cancelPinBtn.addEventListener('click', closePinModalHandler);
-    pinModal.addEventListener('click', function(e) {
-        if (e.target === pinModal) {
-            closePinModalHandler();
+  });
+
+  // --- form validation (title required) ---
+  function validatePinForm() {
+    const title = pinTitle.value.trim();
+    createPinBtn.disabled = title.length === 0;
+    console.log('Validating pin form - title:', title, 'disabled:', createPinBtn.disabled);
+  }
+  pinTitle.addEventListener('input', validatePinForm);
+  pinDescription.addEventListener('input', validatePinForm);
+
+  // --- create OR save changes (depending on pinModalMode) ---
+  if (createPinBtn) {
+    console.log('Adding click event listener to create/save button');
+    createPinBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const title = pinTitle.value.trim() || (pinModalMode === 'create' ? 'Untitled Pin' : '');
+      const description = pinDescription.value.trim();
+      const category = document.querySelector('input[name="category"]:checked').value;
+      const customPhoto = pinImagePreview.querySelector('img')?.src;
+
+      if (pinModalMode === 'create') {
+        console.log('Create pin button clicked!', 'pendingLocation:', pendingPinLocation);
+        if (!pendingPinLocation) {
+          console.log('Cannot create pin - no pending location');
+          showToast('Error: No location selected for pin');
+          return;
         }
-    });
-    
-    // Photo upload
-    pinPhotoBtn.addEventListener('click', () => {
-        pinPhotoInput.click();
-    });
-    
-    pinPhotoInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                pinImagePreview.innerHTML = `<img src="${e.target.result}" alt="Pin photo">`;
-            };
-            reader.readAsDataURL(file);
+        try {
+          createUserPin(
+            pendingPinLocation.lat,
+            pendingPinLocation.lng,
+            title,
+            description,
+            category,
+            customPhoto
+          );
+          console.log('Pin created successfully');
+        } catch (error) {
+          console.error('Error creating pin:', error);
+          showToast('Error creating pin: ' + error.message);
+          return;
         }
-    });
-    
-    // Form validation
-    function validatePinForm() {
-        const title = pinTitle.value.trim();
-        createPinBtn.disabled = title.length === 0;
-        console.log('Validating pin form - title:', title, 'disabled:', createPinBtn.disabled);
-    }
-    
-    pinTitle.addEventListener('input', validatePinForm);
-    pinDescription.addEventListener('input', validatePinForm);
-    
-    // Create pin
-    if (createPinBtn) {
-        console.log('Adding click event listener to create pin button');
-        createPinBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Create pin button clicked!', 'pendingLocation:', pendingPinLocation);
-        
-        if (pendingPinLocation) {
-            const title = pinTitle.value.trim() || 'Untitled Pin';
-            const description = pinDescription.value.trim();
-            const category = document.querySelector('input[name="category"]:checked').value;
-            const customPhoto = pinImagePreview.querySelector('img')?.src;
-            
-            console.log('Creating pin with data:', { title, description, category, customPhoto });
-            
-            try {
-                createUserPin(
-                    pendingPinLocation.lat,
-                    pendingPinLocation.lng,
-                    title,
-                    description,
-                    category,
-                    customPhoto
-                );
-                console.log('Pin created successfully');
-            } catch (error) {
-                console.error('Error creating pin:', error);
-                showToast('Error creating pin: ' + error.message);
-            }
-            
-            closePinModalHandler();
-            
-            // Turn off pin mode
-            isAddingPin = false;
-            updateComposeButtonState();
-            document.getElementById('google-map').style.cursor = 'default';
-            
-            showToast('Pin added successfully!');
-        } else {
-            console.log('Cannot create pin - no pending location');
-            showToast('Error: No location selected for pin');
+
+        // turn off pin mode after creating
+        isAddingPin = false;
+        updateComposeButtonState();
+        document.getElementById('google-map').style.cursor = 'default';
+        showToast('Pin added successfully!');
+      } else {
+        // EDIT MODE: update existing pin (no location change here)
+        const pin = getPinById(editingPinId);
+        if (!pin) {
+          showToast('Error: Pin not found');
+          return;
         }
-        });
-    } else {
-        console.error('Create pin button not found - cannot add event listener');
-    }
-    
-    // Initialize pin details modal
-    initializePinDetailsModal();
+        pin.title = title || pin.title;
+        pin.description = description;
+        pin.category = category;
+        pin.customPhoto = customPhoto || pin.customPhoto;
+
+        // update marker presentation
+        if (pin.marker) {
+          pin.marker.setTitle(pin.title);
+          pin.marker.setIcon({
+            url: `photo/${pin.category}.webp`,
+            scaledSize: new google.maps.Size(40, 40),
+            anchor: new google.maps.Point(20, 40)
+          });
+        }
+
+        savePinsToStorage();
+        showToast('Pin updated');
+      }
+
+      closePinModalHandler();
+    });
+  } else {
+    console.error('Create pin button not found - cannot add event listener');
+  }
+
+  // initize pin details modal
+  initializePinDetailsModal();
 }
 
 function initializePinDetailsModal() {
     const detailsModal = document.getElementById('pin-details-overlay');
     const closeDetailsBtn = document.getElementById('close-pin-details');
     const closeDetailsBtnFooter = document.getElementById('close-pin-details-btn');
-    const deleteBtn = document.getElementById('delete-pin-btn');
+    const editBtn = document.getElementById('edit-pin-btn');
+    if (editBtn) {
+    editBtn.addEventListener('click', function () {
+        const pinId = parseInt(detailsModal.dataset.pinId);
+        const pinData = getPinById(pinId);
+        if (!pinData) return;
+        detailsModal.classList.remove('active');
+        openEditPinModal(pinData);
+    });
+    }
     
     // Close modal events
     closeDetailsBtn.addEventListener('click', () => {
@@ -289,14 +345,7 @@ function initializePinDetailsModal() {
             detailsModal.classList.remove('active');
         }
     });
-    
-    // Delete pin
-    deleteBtn.addEventListener('click', function() {
-        const pinId = parseInt(detailsModal.dataset.pinId);
-        if (pinId) {
-            deleteUserPin(pinId);
-        }
-    });
+
 }
 
 function handleComposeClick() {
@@ -516,6 +565,64 @@ function addInteractiveFeatures() {
             console.log('Opening full screen post view');
         }
     });
+}
+
+// edit pin function
+function openEditPinModal(pinData) {
+  const pinModal = document.getElementById('pin-modal-overlay');
+  const headerTitle = pinModal.querySelector('.modal-header h3');
+  const pinTitle = document.getElementById('pin-title');
+  const pinDescription = document.getElementById('pin-description');
+  const pinImagePreview = document.getElementById('pin-image-preview');
+  const pinPhotoInput = document.getElementById('pin-photo');
+  const createBtn = document.getElementById('create-pin-btn'); // will act as Save Changes in edit mode
+
+  // set mode + current editing id
+  pinModalMode = 'edit';
+  editingPinId = pinData.id;
+
+  // header & fields
+  headerTitle.textContent = 'Edit Pin';
+  pinTitle.value = pinData.title || '';
+  pinDescription.value = pinData.description || '';
+
+  // category
+  const radio = document.querySelector(`input[name="category"][value="${pinData.category}"]`);
+  if (radio) radio.checked = true;
+
+  // photo preview
+  pinImagePreview.innerHTML = '';
+  if (pinData.customPhoto) {
+    pinImagePreview.innerHTML = `<img src="${pinData.customPhoto}" alt="Pin photo">`;
+  }
+
+  // reset file input
+  pinPhotoInput.value = '';
+
+  // turn "Create Pin" into "Save Changes"
+  createBtn.textContent = 'Save Changes';
+
+  // ensure a red delete button exists in the modal footer (only in edit mode)
+  let deleteInEditBtn = document.getElementById('delete-pin-in-edit-btn');
+  if (!deleteInEditBtn) {
+    deleteInEditBtn = document.createElement('button');
+    deleteInEditBtn.id = 'delete-pin-in-edit-btn';
+    deleteInEditBtn.className = 'pin-action-btn delete';
+    deleteInEditBtn.style.flex = '1';
+    deleteInEditBtn.textContent = 'Delete Pin';
+    // insert before createBtn so layout is: Cancel | Delete Pin | Save Changes
+    const footer = pinModal.querySelector('.modal-footer');
+    footer.insertBefore(deleteInEditBtn, createBtn);
+  }
+  deleteInEditBtn.onclick = () => {
+    if (editingPinId) {
+      deleteUserPin(editingPinId);
+      closePinModalHandler(); // defined inside initializePinModal
+    }
+  };
+
+  // show modal
+  pinModal.classList.add('active');
 }
 
 function toggleLike(button, postId) {
@@ -1014,7 +1121,7 @@ async function savePinsToStorage() {
         localStorage.setItem('userPins', JSON.stringify(pinsToSave));
         
         // Auto-download the pins file for local storage
-        downloadPinsFile();
+        
         
     } catch (error) {
         console.error('Error saving pins to file:', error);
