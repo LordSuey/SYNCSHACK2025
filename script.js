@@ -1008,6 +1008,9 @@ function initMap() {
     hardCodedBounds.extend({ lat: -33.917355671981475, lng: 151.22964983661436 }); // Museum of Human Disease
     hardCodedBounds.extend({ lat: -33.88543818146638, lng: 151.22673978951298 }); // Paddington Reservoir Gardens
     hardCodedBounds.extend({ lat: -33.86622922860472, lng: 151.21226606425876 }); // Trim The Cat
+    hardCodedBounds.extend({ lat: -33.88394859890162, lng: 151.2002702523284 }); // Visit the better uni
+    hardCodedBounds.extend({ lat: -33.89169673814553, lng: 151.19523655460904 }); // Meet the Redfern cat
+    hardCodedBounds.extend({ lat: -33.883767176525474, lng: 151.19477672401376 }); // Bank Heist
     map.fitBounds(hardCodedBounds);
     map.setZoom(Math.max(map.getZoom(), 11)); // Ensure minimum zoom level
     
@@ -1108,7 +1111,7 @@ let pendingPinLocation = null;
 async function savePinsToStorage() {
     try {
         // Filter out hard-coded pins and remove marker references before saving
-        const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650];
+        const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650, 1756601205197, 1756601301459, 1756601359058];
         const pinsToSave = userPins
             .filter(pin => !hardCodedPinIds.includes(pin.id)) // Exclude hard-coded pins
             .map(pin => {
@@ -1219,6 +1222,33 @@ function loadPinsFromStorage() {
                 description: "",
                 category: "landmark",
                 timestamp: new Date("2025-08-31T00:34:19.650Z")
+            },
+            {
+                id: 1756601205197,
+                lat: -33.88394859890162,
+                lng: 151.2002702523284,
+                title: "Visit the better uni",
+                description: "UTS visit (jenga tower)",
+                category: "event",
+                timestamp: new Date("2025-08-31T00:46:45.197Z")
+            },
+            {
+                id: 1756601301459,
+                lat: -33.89169673814553,
+                lng: 151.19523655460904,
+                title: "Meet the Redfern cat",
+                description: "",
+                category: "event",
+                timestamp: new Date("2025-08-31T00:48:21.459Z")
+            },
+            {
+                id: 1756601359058,
+                lat: -33.883767176525474,
+                lng: 151.19477672401376,
+                title: "Bank Heist",
+                description: "NOT SERIOUS",
+                category: "event",
+                timestamp: new Date("2025-08-31T00:49:19.058Z")
             }
         ];
         
@@ -1273,7 +1303,7 @@ function loadPinsFromStorage() {
 
 function downloadPinsFile() {
     try {
-        const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650];
+        const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650, 1756601205197, 1756601301459, 1756601359058];
         const pinsToSave = userPins
             .filter(pin => !hardCodedPinIds.includes(pin.id)) // Exclude hard-coded pins
             .map(pin => {
@@ -1302,7 +1332,7 @@ function downloadPinsFile() {
 
 function clearAllPins() {
     // Remove only user-created markers from map, keep hard-coded pins
-    const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650];
+    const hardCodedPinIds = [1756574202596, 1756576515738, 1756576659444, 1756600128291, 1756600174470, 1756600303084, 1756600372337, 1756600431649, 1756600459650, 1756601205197, 1756601301459, 1756601359058];
     userPins.forEach(pin => {
         if (pin.marker && !hardCodedPinIds.includes(pin.id)) {
             pin.marker.setMap(null);
@@ -1570,6 +1600,21 @@ function showPinDetails(pinData) {
         // Use Trim The Cat image
         console.log('Using Trim The Cat image');
         photo.src = 'photo/trim_the_cat.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756601205197) {
+        // Use Visit the better uni image
+        console.log('Using Visit the better uni image');
+        photo.src = 'photo/visit the better uni.jpg';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756601301459) {
+        // Use Redfern cat image for the "Meet the Redfern cat" event
+        console.log('Using Redfern cat image for event');
+        photo.src = 'photo/redfern cat.png';
+        photo.style.display = 'block';
+    } else if (pinData.id === 1756601359058) {
+        // Use Bank Heist image
+        console.log('Using Bank Heist image');
+        photo.src = 'photo/bank heist.webp';
         photo.style.display = 'block';
     } else {
         console.log('Using category icon for category:', pinData.category);
