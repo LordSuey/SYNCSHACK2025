@@ -808,15 +808,23 @@ function refreshFeed() {
 
 // Google Maps functionality
 function initMap() {
+    console.log('initMap called');
+    
     // Check if there's a location redirect from profile page
     const redirectLocation = localStorage.getItem('redirectToLocation');
+    console.log('redirectLocation from localStorage:', redirectLocation);
+    
     let defaultLocation, defaultZoom;
     
     if (redirectLocation) {
         try {
             const locationData = JSON.parse(redirectLocation);
+            console.log('Parsed location data:', locationData);
+            
             defaultLocation = { lat: locationData.lat, lng: locationData.lng };
             defaultZoom = locationData.zoom || 15;
+            
+            console.log('Setting map to location:', defaultLocation, 'zoom:', defaultZoom);
             
             // Clear the redirect data after using it
             localStorage.removeItem('redirectToLocation');
@@ -825,6 +833,10 @@ function initMap() {
             setTimeout(() => {
                 if (locationData.type === 'achievement') {
                     showToast(`Showing ${locationData.achievementTitle} location`);
+                } else if (locationData.type === 'saved') {
+                    showToast(`Showing ${locationData.savedTitle} on map`);
+                } else if (locationData.type === 'seen') {
+                    showToast(`Showing ${locationData.seenTitle} on map`);
                 } else {
                     showToast(`Showing ${locationData.name}`);
                 }
@@ -865,6 +877,78 @@ function initMap() {
                 // Open info window automatically for achievements
                 setTimeout(() => {
                     achievementInfoWindow.open(map, map.getCenter());
+                }, 1000);
+                
+            } else if (locationData.type === 'saved') {
+                // Add saved location marker
+                const savedMarker = new google.maps.Marker({
+                    position: defaultLocation,
+                    map: map,
+                    title: locationData.savedTitle,
+                    icon: {
+                        url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPg==',
+                        scaledSize: new google.maps.Size(45, 45)
+                    }
+                });
+                
+                // Add saved location info window
+                const savedInfoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="color: #333; max-width: 250px;">
+                            <h3 style="margin: 0 0 8px 0; color: #000; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">💾</span>
+                                ${locationData.savedTitle}
+                            </h3>
+                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
+                                <strong>Location:</strong> ${locationData.name}
+                            </p>
+                            <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ff6b6b;">
+                                <span>📌</span>
+                                <span>Saved Location</span>
+                            </div>
+                        </div>
+                    `
+                });
+                
+                // Open info window automatically for saved locations
+                setTimeout(() => {
+                    savedInfoWindow.open(map, savedMarker);
+                }, 1000);
+                
+            } else if (locationData.type === 'seen') {
+                // Add seen location marker
+                const seenMarker = new google.maps.Marker({
+                    position: defaultLocation,
+                    map: map,
+                    title: locationData.seenTitle,
+                    icon: {
+                        url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjNGNhZDUwIi8+Cjwvc3ZnPg==',
+                        scaledSize: new google.maps.Size(45, 45)
+                    }
+                });
+                
+                // Add seen location info window
+                const seenInfoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="color: #333; max-width: 250px;">
+                            <h3 style="margin: 0 0 8px 0; color: #000; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">👁️</span>
+                                ${locationData.seenTitle}
+                            </h3>
+                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
+                                <strong>Location:</strong> ${locationData.name}
+                            </p>
+                            <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #4caf50;">
+                                <span>✅</span>
+                                <span>Visited Location</span>
+                            </div>
+                        </div>
+                    `
+                });
+                
+                // Open info window automatically for seen locations
+                setTimeout(() => {
+                    seenInfoWindow.open(map, seenMarker);
                 }, 1000);
                 
             } else {

@@ -18,6 +18,8 @@ function initializeProfileTabs() {
 }
 
 function switchProfileTab(tabId) {
+    console.log('Switching to tab:', tabId);
+    
     // Update active profile tab
     const profileTabs = document.querySelectorAll('.profile-tab');
     profileTabs.forEach(tab => tab.classList.remove('active'));
@@ -32,11 +34,59 @@ function switchProfileTab(tabId) {
     const targetPanel = document.getElementById(`${tabId}-content`);
     if (targetPanel) {
         targetPanel.classList.add('active');
+        console.log('Tab panel activated:', targetPanel.id);
+    } else {
+        console.error('Target panel not found for tab:', tabId);
     }
 }
 
 // Interactive features
 function initializeInteractiveFeatures() {
+    // Debug: Check if saved and seen items exist
+    const savedItems = document.querySelectorAll('.saved-item');
+    const seenItems = document.querySelectorAll('.seen-item');
+    console.log('Found saved items:', savedItems.length);
+    console.log('Found seen items:', seenItems.length);
+    
+    // Test: Add a simple click handler to test if items are clickable
+    savedItems.forEach((item, index) => {
+        console.log(`Saved item ${index}:`, item);
+        item.addEventListener('click', function(e) {
+            console.log('Direct click on saved item!');
+            e.stopPropagation();
+            
+            // Test navigation immediately
+            const location = item.getAttribute('data-location');
+            const locationName = item.getAttribute('data-location-name');
+            const zoom = item.getAttribute('data-zoom');
+            const title = item.querySelector('h4').textContent;
+            
+            if (location) {
+                console.log('Testing navigation for:', title);
+                goToSavedLocation(location, locationName, zoom, title);
+            }
+        });
+    });
+    
+    seenItems.forEach((item, index) => {
+        console.log(`Seen item ${index}:`, item);
+        item.addEventListener('click', function(e) {
+            console.log('Direct click on seen item!');
+            e.stopPropagation();
+            
+            // Test navigation immediately
+            const location = item.getAttribute('data-location');
+            const locationName = item.getAttribute('data-location-name');
+            const zoom = item.getAttribute('data-zoom');
+            const title = item.querySelector('h4').textContent;
+            
+            if (location) {
+                console.log('Testing navigation for:', title);
+                goToSeenLocation(location, locationName, zoom, title);
+            }
+        });
+    });
+    
     // Back button functionality
     const backBtn = document.querySelector('.back-btn');
     if (backBtn) {
@@ -61,6 +111,7 @@ function initializeInteractiveFeatures() {
     
     // Achievement items click handlers
     document.addEventListener('click', function(e) {
+        console.log('Click event detected on:', e.target);
         if (e.target.closest('.achievement-item')) {
             const achievementItem = e.target.closest('.achievement-item');
             const title = achievementItem.querySelector('h4').textContent;
@@ -78,16 +129,46 @@ function initializeInteractiveFeatures() {
         
         // Saved items click handlers
         if (e.target.closest('.saved-item')) {
+            console.log('Saved item clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            
             const savedItem = e.target.closest('.saved-item');
             const title = savedItem.querySelector('h4').textContent;
-            showToast(`Opening saved place: ${title}`);
+            const location = savedItem.getAttribute('data-location');
+            const locationName = savedItem.getAttribute('data-location-name');
+            const zoom = savedItem.getAttribute('data-zoom');
+            
+            console.log('Saved item data:', { title, location, locationName, zoom });
+            
+            if (location) {
+                // Navigate to map with saved location
+                goToSavedLocation(location, locationName, zoom, title);
+            } else {
+                showToast(`Opening saved place: ${title}`);
+            }
         }
         
         // Seen items click handlers
         if (e.target.closest('.seen-item')) {
+            console.log('Seen item clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            
             const seenItem = e.target.closest('.seen-item');
             const title = seenItem.querySelector('h4').textContent;
-            showToast(`Opening visited place: ${title}`);
+            const location = seenItem.getAttribute('data-location');
+            const locationName = seenItem.getAttribute('data-location-name');
+            const zoom = seenItem.getAttribute('data-zoom');
+            
+            console.log('Seen item data:', { title, location, locationName, zoom });
+            
+            if (location) {
+                // Navigate to map with seen location
+                goToSeenLocation(location, locationName, zoom, title);
+            } else {
+                showToast(`Opening visited place: ${title}`);
+            }
         }
     });
 }
@@ -146,6 +227,78 @@ function goToAchievementLocation(location, locationName, zoom, achievementTitle)
     
     // Redirect to the main page (map)
     setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 1000);
+}
+
+function goToSavedLocation(location, locationName, zoom, savedTitle) {
+    console.log('goToSavedLocation called with:', { location, locationName, zoom, savedTitle });
+    
+    // Parse the location string (format: "lat,lng")
+    const [lat, lng] = location.split(',').map(coord => parseFloat(coord.trim()));
+    
+    console.log('Parsed coordinates:', { lat, lng });
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        showToast('Invalid location data for this saved place');
+        return;
+    }
+    
+    // Store the saved location data in localStorage
+    const locationData = {
+        lat: lat,
+        lng: lng,
+        name: locationName,
+        zoom: parseInt(zoom) || 15,
+        type: 'saved',
+        savedTitle: savedTitle
+    };
+    
+    console.log('Storing location data:', locationData);
+    localStorage.setItem('redirectToLocation', JSON.stringify(locationData));
+    
+    // Show toast before redirecting
+    showToast(`Showing ${savedTitle} on map`);
+    
+    // Redirect to the main page (map)
+    setTimeout(() => {
+        console.log('Redirecting to index.html');
+        window.location.href = 'index.html';
+    }, 1000);
+}
+
+function goToSeenLocation(location, locationName, zoom, seenTitle) {
+    console.log('goToSeenLocation called with:', { location, locationName, zoom, seenTitle });
+    
+    // Parse the location string (format: "lat,lng")
+    const [lat, lng] = location.split(',').map(coord => parseFloat(coord.trim()));
+    
+    console.log('Parsed coordinates:', { lat, lng });
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        showToast('Invalid location data for this visited place');
+        return;
+    }
+    
+    // Store the seen location data in localStorage
+    const locationData = {
+        lat: lat,
+        lng: lng,
+        name: locationName,
+        zoom: parseInt(zoom) || 15,
+        type: 'seen',
+        seenTitle: seenTitle
+    };
+    
+    console.log('Storing location data:', locationData);
+    localStorage.setItem('redirectToLocation', JSON.stringify(locationData));
+    
+    // Show toast before redirecting
+    showToast(`Showing ${seenTitle} on map`);
+    
+    // Redirect to the main page (map)
+    setTimeout(() => {
+        console.log('Redirecting to index.html');
         window.location.href = 'index.html';
     }, 1000);
 }
