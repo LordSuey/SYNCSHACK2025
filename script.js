@@ -1119,6 +1119,17 @@ async function savePinsToStorage() {
                 return pinData;
             });
         
+        // Save attendance data for hardcoded pins separately
+        const hardcodedAttendanceData = {};
+        userPins.forEach(pin => {
+            if (hardCodedPinIds.includes(pin.id) && pin.category === 'event') {
+                hardcodedAttendanceData[pin.id] = {
+                    attendees: pin.attendees,
+                    userAttending: pin.userAttending
+                };
+            }
+        });
+        
         // Create a downloadable JSON file
         const dataStr = JSON.stringify(pinsToSave, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -1129,6 +1140,9 @@ async function savePinsToStorage() {
         
         // Save only user-created pins to localStorage
         localStorage.setItem('userPins', JSON.stringify(pinsToSave));
+        
+        // Save hardcoded pins attendance data
+        localStorage.setItem('hardcodedAttendance', JSON.stringify(hardcodedAttendanceData));
         
         // Auto-download the pins file for local storage
         
@@ -1176,7 +1190,9 @@ function loadPinsFromStorage() {
                 title: "Picnic at Wendy's Secret Garden",
                 description: "",
                 category: "event",
-                timestamp: new Date("2025-08-31T00:28:48.291Z")
+                timestamp: new Date("2025-08-31T00:28:48.291Z"),
+                attendees: 5,
+                userAttending: false
             },
             {
                 id: 1756600174470,
@@ -1185,7 +1201,9 @@ function loadPinsFromStorage() {
                 title: "Centennial park powerful owl search",
                 description: "",
                 category: "event",
-                timestamp: new Date("2025-08-31T00:29:34.470Z")
+                timestamp: new Date("2025-08-31T00:29:34.470Z"),
+                attendees: 12,
+                userAttending: false
             },
             {
                 id: 1756600303084,
@@ -1230,7 +1248,9 @@ function loadPinsFromStorage() {
                 title: "Visit the better uni",
                 description: "UTS visit (jenga tower)",
                 category: "event",
-                timestamp: new Date("2025-08-31T00:46:45.197Z")
+                timestamp: new Date("2025-08-31T00:46:45.197Z"),
+                attendees: 8,
+                userAttending: false
             },
             {
                 id: 1756601301459,
@@ -1239,16 +1259,20 @@ function loadPinsFromStorage() {
                 title: "Meet the Redfern cat",
                 description: "",
                 category: "event",
-                timestamp: new Date("2025-08-31T00:48:21.459Z")
+                timestamp: new Date("2025-08-31T00:48:21.459Z"),
+                attendees: 3,
+                userAttending: false
             },
             {
                 id: 1756601359058,
                 lat: -33.883767176525474,
                 lng: 151.19477672401376,
-                title: "Bank Heist",
-                description: "NOT SERIOUS",
+                title: "Visit the bank",
+                description: "Hoodie run!!",
                 category: "event",
-                timestamp: new Date("2025-08-31T00:49:19.058Z")
+                timestamp: new Date("2025-08-31T00:49:19.058Z"),
+                attendees: 15,
+                userAttending: false
             }
         ];
         
@@ -1270,17 +1294,32 @@ function loadPinsFromStorage() {
         // Clear current pins and reload
         userPins = [];
         
+        // Load saved attendance data for hardcoded pins
+        const savedAttendanceData = localStorage.getItem('hardcodedAttendance');
+        let attendanceOverrides = {};
+        if (savedAttendanceData) {
+            try {
+                attendanceOverrides = JSON.parse(savedAttendanceData);
+
+            } catch (error) {
+                console.error('Error parsing attendance data:', error);
+            }
+        }
+        
         // Add hard-coded pins first
         hardCodedPins.forEach(pinData => {
+            // Apply attendance overrides if they exist
+            if (attendanceOverrides[pinData.id]) {
+                pinData.attendees = attendanceOverrides[pinData.id].attendees;
+                pinData.userAttending = attendanceOverrides[pinData.id].userAttending;
+
+            }
+            
             userPins.push(pinData);
-            console.log('Adding hard-coded pin:', pinData);
             
             // Create marker if Google Maps is available
             if (typeof google !== 'undefined' && google.maps && map) {
-                console.log('Creating marker for hard-coded pin');
                 createPinMarker(pinData);
-            } else {
-                console.log('Google Maps not ready yet for hard-coded pin');
             }
         });
         
@@ -1492,7 +1531,10 @@ function createUserPin(lat, lng, title, description, category, customPhoto) {
         description: description,
         category: category,
         customPhoto: customPhoto,
-        timestamp: new Date()
+        timestamp: new Date(),
+        // Add attendance tracking for events
+        attendees: category === 'event' ? 0 : undefined,
+        userAttending: category === 'event' ? false : undefined
     };
     
     userPins.push(pinData);
@@ -1630,11 +1672,99 @@ function showPinDetails(pinData) {
     category.innerHTML = `${categoryConfig[pinData.category].emoji} ${pinData.category.charAt(0).toUpperCase() + pinData.category.slice(1)}`;
     description.textContent = pinData.description || 'No description provided.';
     
+    // Handle event attendance section
+    const attendanceSection = document.getElementById('event-attendance-section');
+    if (pinData.category === 'event') {
+        attendanceSection.style.display = 'block';
+        
+
+        
+        // Update attendance count
+        const attendeeCount = document.getElementById('attendee-count');
+        attendeeCount.textContent = pinData.attendees !== undefined ? pinData.attendees : 0;
+        
+        // Update button states
+        const goingBtn = document.getElementById('going-btn');
+        const notGoingBtn = document.getElementById('not-going-btn');
+        
+        // Clear previous states
+        goingBtn.classList.remove('active');
+        notGoingBtn.classList.remove('active');
+        
+        // Set current state
+        if (pinData.userAttending) {
+            goingBtn.classList.add('active');
+        }
+        
+        // Remove existing event listeners
+        const newGoingBtn = goingBtn.cloneNode(true);
+        const newNotGoingBtn = notGoingBtn.cloneNode(true);
+        goingBtn.parentNode.replaceChild(newGoingBtn, goingBtn);
+        notGoingBtn.parentNode.replaceChild(newNotGoingBtn, notGoingBtn);
+        
+        // Add event listeners for attendance buttons
+        newGoingBtn.addEventListener('click', () => {
+            handleAttendanceClick(pinData.id, true);
+        });
+        
+        newNotGoingBtn.addEventListener('click', () => {
+            handleAttendanceClick(pinData.id, false);
+        });
+        
+    } else {
+        attendanceSection.style.display = 'none';
+    }
+    
     // Store current pin ID for deletion
     modal.dataset.pinId = pinData.id;
     
     // Show modal
     modal.classList.add('active');
+}
+
+function handleAttendanceClick(pinId, going) {
+    const pin = userPins.find(p => p.id === pinId);
+    if (!pin || pin.category !== 'event') {
+        return;
+    }
+    
+    const wasAttending = pin.userAttending;
+    
+    if (going) {
+        // User wants to go
+        if (!wasAttending) {
+            pin.attendees = (pin.attendees || 0) + 1;
+            pin.userAttending = true;
+            showToast('You\'re now going to this event!');
+        }
+    } else {
+        // User doesn't want to go (cross button)
+        if (wasAttending) {
+            pin.attendees = Math.max((pin.attendees || 1) - 1, 0);
+            pin.userAttending = false;
+            showToast('You\'re no longer going to this event');
+        }
+    }
+    
+    // Update the UI immediately
+    const attendeeCount = document.getElementById('attendee-count');
+    const goingBtn = document.getElementById('going-btn');
+    const notGoingBtn = document.getElementById('not-going-btn');
+    
+    if (attendeeCount) {
+        attendeeCount.textContent = pin.attendees || 0;
+    }
+    
+    // Update button states
+    goingBtn.classList.remove('active');
+    notGoingBtn.classList.remove('active');
+    
+    if (pin.userAttending) {
+        goingBtn.classList.add('active');
+    }
+    
+    // Save updated data
+    savePinsToStorage();
 }
 
 function deleteUserPin(pinId) {

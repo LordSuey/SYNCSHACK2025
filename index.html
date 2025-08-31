@@ -164,6 +164,26 @@
                 <h2 id="pin-details-title" class="pin-details-title"></h2>
                 <div id="pin-details-category" class="pin-details-category"></div>
                 <p id="pin-details-description" class="pin-details-description"></p>
+                
+                <!-- Event Attendance Section (shown only for events) -->
+                <div id="event-attendance-section" class="event-attendance-section" style="display: none;">
+                    <div class="attendance-info">
+                        <span class="attendance-count">
+                            <span id="attendee-count">0</span> people going
+                        </span>
+                    </div>
+                    <div class="attendance-controls">
+                        <button class="attendance-btn going" id="going-btn">
+                            <span class="btn-icon">✓</span>
+                            <span class="btn-text">Going</span>
+                        </button>
+                        <button class="attendance-btn not-going" id="not-going-btn">
+                            <span class="btn-icon">✗</span>
+                            <span class="btn-text">Not Going</span>
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="pin-details-actions">
                     <button class="pin-action-btn edit" id="edit-pin-btn">Edit</button>
                     <button class="pin-action-btn close" id="close-pin-details-btn">Close</button>
