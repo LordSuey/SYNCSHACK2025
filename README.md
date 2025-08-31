@@ -25,7 +25,7 @@ cd SYNCSHACK2025
 
 1. Copy the example configuration file:
    ```bash
-   cp config.js config.js
+   cp config.example.js config.js
    ```
 
 2. Get a Google Maps API Key:
@@ -73,7 +73,7 @@ SYNCSHACK2025/
 ├── manifest.json       # PWA manifest
 ├── sw.js              # Service worker
 ├── config.js          # API keys (not in git)
-├── config.js   # Template for API keys
+├── config.example.js   # Template for API keys
 ├── .gitignore         # Git ignore rules
 └── README.md          # This file
 ```
@@ -83,7 +83,7 @@ SYNCSHACK2025/
 - `config.js` is excluded from version control via `.gitignore`
 - Never commit API keys to your repository
 - Consider restricting your Google Maps API key to specific domains
-- The `config.js` file serves as a template for other developers
+- The `config.example.js` file serves as a template for other developers
 
 ## Development
 

@@ -8,7 +8,6 @@ let infoWindow;
 let isAddingPin = false;
 let userPins = [];
 
-
 // Check if we should enable pin mode (from profile page navigation)
 document.addEventListener('DOMContentLoaded', function() {
     const enablePinMode = localStorage.getItem('enablePinMode');
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     }
 });
-
 
 // DOM elements
 const navButtons = document.querySelectorAll('.nav-btn');
@@ -720,10 +718,6 @@ function initMap() {
             setTimeout(() => {
                 if (locationData.type === 'achievement') {
                     showToast(`Showing ${locationData.achievementTitle} location`);
-                } else if (locationData.type === 'saved') {
-                    showToast(`Showing saved place: ${locationData.placeTitle}`);
-                } else if (locationData.type === 'seen') {
-                    showToast(`Showing visited place: ${locationData.placeTitle}`);
                 } else {
                     showToast(`Showing ${locationData.name}`);
                 }
@@ -764,78 +758,6 @@ function initMap() {
                 // Open info window automatically for achievements
                 setTimeout(() => {
                     achievementInfoWindow.open(map, map.getCenter());
-                }, 1000);
-                
-            } else if (locationData.type === 'saved') {
-                // Add saved place marker
-                new google.maps.Marker({
-                    position: defaultLocation,
-                    map: map,
-                    title: locationData.placeTitle,
-                    icon: {
-                        url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjMDA2NmZmIi8+Cjwvc3ZnPg==',
-                        scaledSize: new google.maps.Size(40, 40)
-                    }
-                });
-                
-                // Add saved place info window
-                const savedInfoWindow = new google.maps.InfoWindow({
-                    content: `
-                        <div style="color: #333; max-width: 250px;">
-                            <h3 style="margin: 0 0 8px 0; color: #000; display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 20px;">💾</span>
-                                ${locationData.placeTitle}
-                            </h3>
-                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
-                                <strong>Location:</strong> ${locationData.name}
-                            </p>
-                            <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #0066ff;">
-                                <span>💾</span>
-                                <span>Saved Place</span>
-                            </div>
-                        </div>
-                    `
-                });
-                
-                // Open info window automatically for saved places
-                setTimeout(() => {
-                    savedInfoWindow.open(map, map.getCenter());
-                }, 1000);
-                
-            } else if (locationData.type === 'seen') {
-                // Add seen place marker
-                new google.maps.Marker({
-                    position: defaultLocation,
-                    map: map,
-                    title: locationData.placeTitle,
-                    icon: {
-                        url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjMDBmZjAwIi8+Cjwvc3ZnPg==',
-                        scaledSize: new google.maps.Size(40, 40)
-                    }
-                });
-                
-                // Add seen place info window
-                const seenInfoWindow = new google.maps.InfoWindow({
-                    content: `
-                        <div style="color: #333; max-width: 250px;">
-                            <h3 style="margin: 0 0 8px 0; color: #000; display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 20px;">👁️</span>
-                                ${locationData.placeTitle}
-                            </h3>
-                            <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
-                                <strong>Location:</strong> ${locationData.name}
-                            </p>
-                            <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #00ff00;">
-                                <span>👁️</span>
-                                <span>Visited Place</span>
-                            </div>
-                        </div>
-                    `
-                });
-                
-                // Open info window automatically for seen places
-                setTimeout(() => {
-                    seenInfoWindow.open(map, map.getCenter());
                 }, 1000);
                 
             } else {
@@ -964,7 +886,6 @@ function initMap() {
     // Setup map click for adding pins
     setupMapClickHandler();
     
-
     // Load saved pins from localStorage
     console.log('Map initialized, loading pins...');
     loadPinsFromStorage();
@@ -977,7 +898,6 @@ function initMap() {
     map.fitBounds(hardCodedBounds);
     map.setZoom(Math.max(map.getZoom(), 11)); // Ensure minimum zoom level
     
-
     // Setup achievements functionality
     setupAchievements();
 }
@@ -1070,22 +990,6 @@ function setupMapSearch() {
 
 // Pin creation variables
 let pendingPinLocation = null;
-
-
-function promptForPinDetails(lat, lng) {
-    const title = prompt('Enter a title for this location:');
-    if (title && title.trim()) {
-        const description = prompt('Enter a description (optional):') || '';
-        createUserPin(lat, lng, title.trim(), description.trim());
-        
-        // Turn off pin mode after adding a pin
-        isAddingPin = false;
-        updateComposeButtonState();
-        document.getElementById('google-map').style.cursor = 'default';
-        
-        showToast('Pin added successfully!');
-    } else {
-        showToast('Pin creation cancelled');
 
 // File-based storage functions for pins
 async function savePinsToStorage() {
@@ -1401,13 +1305,11 @@ function createUserPin(lat, lng, title, description, category, customPhoto) {
         console.log('Google Maps marker created successfully');
     } else {
         console.warn('Google Maps not available, storing pin data only');
-
     }
     
     // Save to localStorage
     savePinsToStorage();
 }
-
 
 function createPinMarker(pinData) {
     console.log('createPinMarker called with:', pinData);
@@ -1417,46 +1319,26 @@ function createPinMarker(pinData) {
     console.log('Using category icon:', iconUrl);
     
     console.log('Creating marker at:', pinData.lat, pinData.lng, 'with icon:', iconUrl);
-
     
-    userPins.push(pinData);
-    
-    // Create marker on map
     const marker = new google.maps.Marker({
-        position: { lat: lat, lng: lng },
+        position: { lat: pinData.lat, lng: pinData.lng },
         map: map,
-        title: title,
+        title: pinData.title,
         icon: {
-            url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjNGZhZjUwIi8+Cjwvc3ZnPg==',
-            scaledSize: new google.maps.Size(30, 30)
+            url: iconUrl,
+            scaledSize: new google.maps.Size(40, 40),
+            anchor: new google.maps.Point(20, 40)
         }
     });
 
     console.log('Marker created successfully');
 
     marker.addListener('click', () => {
-
-        const content = `
-            <div style="color: #333; max-width: 200px;">
-                <h3 style="margin: 0 0 8px 0; color: #000;">${title}</h3>
-                ${description ? `<p style="margin: 0 0 8px 0; font-size: 14px;">${description}</p>` : ''}
-                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #666;">
-                    <span>📍</span>
-                    <span>Your Pin</span>
-                </div>
-                <button onclick="deleteUserPin(${pinData.id})" style="margin-top: 8px; background: #ff6b6b; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete Pin</button>
-            </div>
-        `;
-        infoWindow.setContent(content);
-        infoWindow.open(map, marker);
-
         showPinDetails(pinData);
-
     });
     
     // Store marker reference for deletion
     pinData.marker = marker;
-
 }
 
 function showPinDetails(pinData) {
@@ -1508,7 +1390,6 @@ function showPinDetails(pinData) {
     
     // Show modal
     modal.classList.add('active');
-
 }
 
 function deleteUserPin(pinId) {
@@ -1524,17 +1405,12 @@ function deleteUserPin(pinId) {
         // Remove from array
         userPins.splice(pinIndex, 1);
         
-
-        // Close info window
-        infoWindow.close();
-
         // Update localStorage
         savePinsToStorage();
         
         // Close details modal if open
         const detailsModal = document.getElementById('pin-details-overlay');
         detailsModal.classList.remove('active');
-
         
         showToast('Pin deleted');
     }
